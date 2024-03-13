@@ -12,24 +12,27 @@ import java.util.Locale
 
 class ContentViewModel : ViewModel() {
     val showWebView: MutableLiveData<String> = MutableLiveData(State.LOADING.name)
-    var message: MutableLiveData<String> = MutableLiveData("")
-    var workoutData: MutableLiveData<String> = MutableLiveData("")
 
     fun handle(message: String) {
 
         try {
             val json = JSONObject(message)
             when (json.getString("type")) {
-                "finished_workout" -> workoutData.postValue("\nWorkout finished, data received: ${json.getString("data")} ")
-                "error_occured" -> workoutData.postValue("\nThere was an error: ${json.getString("data")} ")
-                "exercise_completed" -> workoutData.postValue("\nExercise completed: ${json.getString("data")} ")
+                "finished_workout" -> println("\nWorkout finished, data received: ${json.getString("data")} ")
+                "error_occured" -> println("\nThere was an error: ${json.getString("data")} ")
+                "exercise_completed" -> println("\nExercise completed: ${json.getString("data")} ")
                 "exitApp" -> {
 
                     Log.e("TAG_viewmodel", "handle: " )
                     showWebView.postValue(State.ERROR.name)
-                    workoutData.postValue("\nUser closed workout window ")
+                    println("\nUser closed workout window ")
                 }
-                else -> { }
+                "kinestex_launched" -> println("\nLaunched KinesteX: ${json.getString("data")} ")
+                "workoutStarted" -> println("\nWorkout started: ${json.getString("data")} ")
+                "workoutOpened" -> println("\nWorkout opened: ${json.getString("data")} ")
+                "plan_unlocked" -> println("\nPlan unlocked: ${json.getString("data")} ")
+
+                else -> { println("Type: ${json.getString("type")}, Data: ${json.getString("data")}") }
             }
         } catch (e: JSONException) {
             e.printStackTrace()
