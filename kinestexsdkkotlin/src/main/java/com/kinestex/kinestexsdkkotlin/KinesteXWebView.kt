@@ -96,7 +96,7 @@ class KinesteXWebView(
                     messageCallback.onMessageReceived(message)
                 }
             }, "messageHandler")
-            loadUrl("https://kineste-x-w.vercel.app")
+            loadUrl("https://kinestex.vercel.app")
         }
     }
 
