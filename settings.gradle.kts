@@ -16,9 +16,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven(url = "https://jitpack.io")
     }
 }
 
+
 rootProject.name = "KinesteXSDKKotlin"
 include(":app")
-include(":kinestexsdkkotlin")
+//include(":kinestexsdkkotlin")
