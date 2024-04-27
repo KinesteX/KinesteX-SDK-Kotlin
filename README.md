@@ -35,7 +35,9 @@ In app -> `build.gradle`
 implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
 ```
 
+
 ### Available categories to sort workout plans:
+
 
 | **enum PlanCategory** | 
 | --- | 
@@ -46,7 +48,9 @@ implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
 | **Custom(String) - in case we release new custom plans for your usage** | 
 
 
+
 ### Available categories to sort workouts (displayed right below the plans):
+
 
 | **enum WorkoutCategory** | 
 | --- | 
@@ -63,6 +67,7 @@ implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
 
 2. **Launching the view**:
     - To display KinesteX, call `createWebView` in KinesteXWebView:
+
 
    ```Kotlin
      private var kinesteXWebView: KinesteXWebView? = null
@@ -85,7 +90,9 @@ implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
    
    ```
 3. **Handling the data**:
+
    We recommend creating a view model for handling changes:
+
    ``` Kotlin
    class ContentViewModel : ViewModel() {
     val showWebView: MutableLiveData<String> = MutableLiveData(State.LOADING.name)
@@ -118,7 +125,9 @@ implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
     }
 
    ```
+
    We pass you a callback function that sends all the data we receive from the user as a HTTPS POST Message:
+
    ```Kotlin
     val callback = object : MessageCallback {
         override fun onMessageReceived(message: String) {
@@ -128,7 +137,9 @@ implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
 
    ```
 
+
 Available options are:
+
 
 ```
 
@@ -143,7 +154,9 @@ Available options are:
     unknown(String) - For handling any unrecognized messages
 
 ```
+
 Available data types:
+
 
 
 | Type          | Data  |          Description     |
