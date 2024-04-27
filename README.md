@@ -32,7 +32,7 @@ dependencyResolutionManagement {
 ```
 In app -> `build.gradle`
 ```gradle
-implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.0")
+implementation("com.github.V-m1r:KinesteXSDKKotlin:1.0.1")
 ```
 
 ### Available categories to sort workout plans:
