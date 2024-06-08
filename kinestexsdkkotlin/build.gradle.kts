@@ -36,11 +36,10 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                from(components["release"]) // 'release' component should be created by the Android library plugin
-
+                from(components["release"])
                 groupId = "com.github.KinesteX"
                 artifactId = "kinestexsdkkotlin"
-                version = "1.0.5"
+                version = "1.0.6"
 
                 pom {
                     name.set("KinesteX SDK Kotlin")
