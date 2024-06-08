@@ -39,7 +39,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.KinesteX"
                 artifactId = "kinestexsdkkotlin"
-                version = "1.0.2"
+                version = "1.1.0"
 
                 pom {
                     name.set("KinesteX SDK Kotlin")
