@@ -32,7 +32,7 @@ dependencyResolutionManagement {
 ```
 In app -> `build.gradle`
 ```gradle
-implementation("com.github.KinesteX:KinesteXSDKKotlin:1.0.1")
+implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.0")
 ```
 
 ### Available categories to sort workout plans:
@@ -45,14 +45,6 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.0.1")
 | **WeightManagement** | 
 | **Custom(String) - in case we release new custom plans for your usage** | 
 
-
-### Available categories to sort workouts (displayed right below the plans):
-
-| **enum WorkoutCategory** | 
-| --- | 
-| **Fitness** |
-| **Rehabilitation** |
-| **Custom(String) - in case we release new custom workouts for your usage** | 
 
 ## Usage
 
