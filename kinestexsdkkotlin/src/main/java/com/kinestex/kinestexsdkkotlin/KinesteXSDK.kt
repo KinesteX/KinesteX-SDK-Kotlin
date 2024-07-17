@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinesteXSDK
 
 import android.content.Context
 import android.util.Log
@@ -101,6 +101,7 @@ class KinesteXSDK {
             userId: String,
             planCategory: PlanCategory = PlanCategory.Cardio,
             user: UserDetails?,
+            data: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -110,15 +111,20 @@ class KinesteXSDK {
                 Log.e("WebViewManager", "⚠️ Validation Error: $validationError")
                 return null
             } else {
-                val data = mutableMapOf<String, Any>(
+                val dataTotal = mutableMapOf<String, Any>(
                     "planC" to planCategoryString(planCategory)
                 )
+
                 user?.let {
-                    data["age"] = it.age
-                    data["height"] = it.height
-                    data["weight"] = it.weight
-                    data["gender"] = genderString(it.gender)
-                    data["lifestyle"] = lifestyleString(it.lifestyle)
+                    dataTotal["age"] = it.age
+                    dataTotal["height"] = it.height
+                    dataTotal["weight"] = it.weight
+                    dataTotal["gender"] = genderString(it.gender)
+                    dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
+                }
+
+                data?.let {
+                    dataTotal.putAll(data)
                 }
 
                 return GenericWebView(
@@ -127,7 +133,7 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex.vercel.app",
-                    data = data,
+                    data = dataTotal,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -154,6 +160,7 @@ class KinesteXSDK {
             userId: String,
             planName: String,
             user: UserDetails?,
+            data: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -170,20 +177,24 @@ class KinesteXSDK {
                 val adjustedPlanName = planName.replace(" ", "%20")
                 val url =
                     "https://kinestex.vercel.app/plan/$adjustedPlanName"
-                val data = mutableMapOf<String, Any>()
+                val dataTotal = mutableMapOf<String, Any>()
+
                 user?.let {
-                    data["age"] = it.age
-                    data["height"] = it.height
-                    data["weight"] = it.weight
-                    data["gender"] = genderString(it.gender)
-                    data["lifestyle"] = lifestyleString(it.lifestyle)
+                    dataTotal["age"] = it.age
+                    dataTotal["height"] = it.height
+                    dataTotal["weight"] = it.weight
+                    dataTotal["gender"] = genderString(it.gender)
+                    dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
+                }
+                data?.let {
+                    dataTotal.putAll(data)
                 }
                 return GenericWebView(
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
                     url = url,
-                    data = data,
+                    data = dataTotal,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,
                     context = context
@@ -211,6 +222,7 @@ class KinesteXSDK {
             userId: String,
             workoutName: String,
             user: UserDetails?,
+            data: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -227,7 +239,8 @@ class KinesteXSDK {
                 val adjustedWorkoutName = workoutName.replace(" ", "%20")
                 val url =
                     "https://kinestex.vercel.app/workout/$adjustedWorkoutName"
-                val data: Map<String, Any> = mapOf(
+
+                val dataTotal: MutableMap<String, Any> = mutableMapOf(
                     "age" to (user?.age ?: ""),
                     "height" to (user?.height ?: ""),
                     "weight" to (user?.weight ?: ""),
@@ -235,13 +248,17 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
+                data?.let {
+                    dataTotal.putAll(data)
+                }
+
                 return GenericWebView(
                     context = context,
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
                     url = url,
-                    data = data,
+                    data = dataTotal,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -270,6 +287,7 @@ class KinesteXSDK {
             exercise: String,
             countdown: Int,
             user: UserDetails?,
+            data: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -283,7 +301,7 @@ class KinesteXSDK {
                 )
                 return null
             } else {
-                val data: Map<String, Any> = mapOf(
+                val dataTotal: MutableMap<String, Any> = mutableMapOf(
                     "exercise" to exercise,
                     "countdown" to countdown,
                     "age" to (user?.age ?: ""),
@@ -293,13 +311,17 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
+                data?.let {
+                    dataTotal.putAll(data)
+                }
+
                 return GenericWebView(
                     context = context,
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex-challenge.vercel.app",
-                    data = data,
+                    data = dataTotal,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -314,6 +336,7 @@ class KinesteXSDK {
             exercises: List<String>,
             currentExercise: String,
             user: UserDetails?,
+            data: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -336,7 +359,7 @@ class KinesteXSDK {
                 )
                 return null
             } else {
-                val data = mapOf(
+                val dataTotal: MutableMap<String, Any> = mutableMapOf(
                     "exercises" to exercises,
                     "currentExercise" to currentExercise,
                     "age" to (user?.age ?: ""),
@@ -346,13 +369,17 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
+                data?.let {
+                    dataTotal.putAll(data)
+                }
+
                 val cameraWebViewInstance = GenericWebView(
                     context = context,
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex-camera-ai.vercel.app",
-                    data = data,
+                    data = dataTotal,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
