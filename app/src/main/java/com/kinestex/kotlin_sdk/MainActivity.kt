@@ -42,8 +42,8 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: WebView? = null
 
-    private val apiKey = "" // store this key securely
-    private val company = ""
+    private val apiKey = "apiKey" // store this key securely
+    private val company = "your company"
     private val userId = "user1"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -207,6 +207,10 @@ class MainActivity : AppCompatActivity() {
             )
         val view = when (viewModel.selectedOptionPosition.value) {
             0 -> {
+                val data = mutableMapOf<String, Any>()
+                data["planC"] = "Strength" // passing forcefully the planCategory
+                data["isHideHeaderMain"] = false // should display header in main screen
+
                 webView = KinesteXSDK.createMainView(
                     this,
                     apiKey,
@@ -214,7 +218,9 @@ class MainActivity : AppCompatActivity() {
                     userId,
                     getPlanCategory(subOption),
                     null,
+                    customParams = data, // example of using custom parameters
                     viewModel.isLoading,
+
                     ::handleWebViewMessage
                 )
                 return webView
@@ -227,6 +233,7 @@ class MainActivity : AppCompatActivity() {
                     company,
                     userId,
                     subOption ?: "Circuit Training",
+                    null,
                     null,
                     viewModel.isLoading,
                     ::handleWebViewMessage
@@ -243,8 +250,8 @@ class MainActivity : AppCompatActivity() {
                     userId,
                     subOption ?: "Fitness Lite",
                     null,
-                    viewModel.isLoading,
-                    ::handleWebViewMessage
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = ::handleWebViewMessage
                 )
                 return webView
             }
@@ -258,6 +265,7 @@ class MainActivity : AppCompatActivity() {
                     subOption ?: "",
                     100,
                     null,
+                    customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage
                 )

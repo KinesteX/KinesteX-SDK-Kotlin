@@ -1,4 +1,4 @@
-package com.kinestex.kinesteXSDK
+package com.kinestex.kinestexsdkkotlin
 
 import android.content.Context
 import android.util.Log
@@ -101,7 +101,7 @@ class KinesteXSDK {
             userId: String,
             planCategory: PlanCategory = PlanCategory.Cardio,
             user: UserDetails?,
-            data: MutableMap<String, Any>?,
+            customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -123,8 +123,8 @@ class KinesteXSDK {
                     dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
                 }
 
-                data?.let {
-                    dataTotal.putAll(data)
+                customParams?.let {
+                    dataTotal.putAll(customParams)
                 }
 
                 return GenericWebView(
@@ -160,7 +160,7 @@ class KinesteXSDK {
             userId: String,
             planName: String,
             user: UserDetails?,
-            data: MutableMap<String, Any>?,
+            customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -186,8 +186,8 @@ class KinesteXSDK {
                     dataTotal["gender"] = genderString(it.gender)
                     dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
                 }
-                data?.let {
-                    dataTotal.putAll(data)
+                customParams?.let {
+                    dataTotal.putAll(customParams)
                 }
                 return GenericWebView(
                     apiKey = apiKey,
@@ -222,7 +222,7 @@ class KinesteXSDK {
             userId: String,
             workoutName: String,
             user: UserDetails?,
-            data: MutableMap<String, Any>?,
+            customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -248,8 +248,8 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                data?.let {
-                    dataTotal.putAll(data)
+                customParams?.let {
+                    dataTotal.putAll(customParams)
                 }
 
                 return GenericWebView(
@@ -287,7 +287,7 @@ class KinesteXSDK {
             exercise: String,
             countdown: Int,
             user: UserDetails?,
-            data: MutableMap<String, Any>?,
+            customParams: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -311,8 +311,8 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                data?.let {
-                    dataTotal.putAll(data)
+                customParams?.let {
+                    dataTotal.putAll(customParams)
                 }
 
                 return GenericWebView(
@@ -336,7 +336,7 @@ class KinesteXSDK {
             exercises: List<String>,
             currentExercise: String,
             user: UserDetails?,
-            data: MutableMap<String, Any>?,
+            customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit
         ): WebView? {
@@ -369,8 +369,8 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                data?.let {
-                    dataTotal.putAll(data)
+                customParams?.let {
+                    dataTotal.putAll(customParams)
                 }
 
                 val cameraWebViewInstance = GenericWebView(
