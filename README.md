@@ -63,17 +63,22 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.0.8")
    @SuppressLint("SetJavaScriptEnabled", "MissingInflatedId")
    override fun onCreate(savedInstanceState: Bundle?) {
        super.onCreate(savedInstanceState)
+      
+     // OPTIONAL: Custom Parameters
+      val data = mutableMapOf<String, Any>()
+      data["isHideHeaderMain"] = false // should display header in main screen
 
        kinesteXWebView = KinesteXSDK.createMainView(
-           this,
-           apiKey, // store securely
-           "YOUR COMPANY NAME",
-           "YOUR USER ID",
-           PlanCategory.Cardio,
-           null, // class with user details
-           isLoading,
-           ::handleWebViewMessage // callback to handle messages
-       )
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    getPlanCategory(subOption),
+                    null,
+                    customParams = data, // example of using custom parameters. CAN BE NULL
+                    viewModel.isLoading,
+                    ::handleWebViewMessage
+                )
    }
    ```
 
@@ -81,12 +86,13 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.0.8")
 
    ```kotlin
    class ContentViewModel : ViewModel() {
-       val showWebView = MutableLiveData<WebViewState>() 
-       val selectedOptionPosition = MutableLiveData<Int>() // for the selected integration option (not necessary unless combining our solutions)
-       val isLoading = MutableStateFlow(false) // loading state of the webview
+       val showWebView: MutableStateFlow<WebViewState> = MutableStateFlow(WebViewState.LOADING) // state of the webview: LOADING, ERROR, SUCCESS
+
+       var selectedOptionPosition: MutableStateFlow<Int> = MutableStateFlow(0) // for the selected integration option (not necessary unless combining our solutions)
+       val isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)// loading state of the webview
        // CAMERA COMPONENT SPECIFIC
-       val mistake = MutableStateFlow("") // for mistakes IF using our camera component
-       val reps = MutableStateFlow(0) // for reps IF using our camera component
+       val reps: MutableStateFlow<Int> = MutableStateFlow(0) // for reps IF using our camera component
+       val mistake: MutableStateFlow<String> = MutableStateFlow("") // for mistakes IF using our camera component
    }
    ```
 
@@ -97,77 +103,80 @@ The KinesteX SDK provides multiple methods to create different views:
 - **Main View (Complete User Experience)**:
 
    ```kotlin
-   val webView = KinesteXSDK.createMainView(
-       context,
-       apiKey,
-       companyName,
-       userId,
-       PlanCategory.Cardio,
-       user,
-       isLoading,
-       onMessageReceived
-   )
+     kinesteXWebView = KinesteXSDK.createMainView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    PlanCategory.Cardio, // selected to plan category 
+                    null, // user details
+                    customParams = data, // example of using custom parameters
+                    viewModel.isLoading,
+                    ::handleWebViewMessage // callback function to handle responses
+     )
    ```
 
 - **Plan View (Stand-alone workout plan page)**:
 
    ```kotlin
-   val webView = KinesteXSDK.createPlanView(
-       context,
-       apiKey,
-       companyName,
-       userId,
-       "Circuit Training",
-       user,
-       isLoading,
-       onMessageReceived
-   )
+     kinesteXWebView = KinesteXSDK.createPlanView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    "Circuit Training", // name of the workout plan
+                    null,
+                    null, // custom parameters is null
+                    viewModel.isLoading,
+                    ::handleWebViewMessage
+     )
    ```
 
 - **Workout View (Individual workout page)**:
 
    ```kotlin
-   val webView = KinesteXSDK.createWorkoutView(
-       context,
-       apiKey,
-       companyName,
-       userId,
-       "Fitness Lite",
-       user,
-       isLoading,
-       onMessageReceived
+    kinesteXWebView = KinesteXSDK.createWorkoutView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    "Fitness Lite", // name of the workout
+                    null, 
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = ::handleWebViewMessage
    )
    ```
 
 - **Challenge View**:
 
    ```kotlin
-   val webView = KinesteXSDK.createChallengeView(
-       context,
-       apiKey,
-       companyName,
-       userId,
-       "Jumping Jack",
-       100,
-       user,
-       isLoading,
-       onMessageReceived
-   )
+    kinesteXWebView = KinesteXSDK.createChallengeView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    "Squats", // name of the exercise
+                    100, // countdown of the challenge
+                    null, 
+                    customParams = null,
+                    viewModel.isLoading,
+                    ::handleWebViewMessage
+    )
    ```
 
 - **Camera Component (Just camera + our motion analysis and feedback)**:
 
    ```kotlin
-   val webView = KinesteXSDK.createCameraComponent(
-       context,
-       apiKey,
-       companyName,
-       userId,
-       listOf("Squats", "Jumping Jack"), // list of exercises we are tracking
-       "Squats", // current exercise we are on (which one we start with first)
-       user,
-       isLoading,
-       onMessageReceived // callback to handle messages including current rep count and mistakes
+   kinesteXWebView = KinesteXSDK.createCameraComponent(
+            context = context,
+            apiKey = apiKey,
+            companyName = company,
+            userId = userId,
+            currentExercise = "Squats", // current exercise name
+            exercises = listOf("Squats","Jumping Jack"), // exercises that user is expected to do
+            user = null,
+            isLoading = viewModel.isLoading,
+            onMessageReceived = ::handleWebViewMessage
    )
    ```
 
@@ -176,26 +185,34 @@ The KinesteX SDK provides multiple methods to create different views:
 The SDK sends various messages through the WebView. Implement a callback to handle these messages:
 
 ```kotlin
-fun handleWebViewMessage(message: WebViewMessage) {
+    private fun handleWebViewMessage(message: WebViewMessage) {
     when (message) {
-        is WebViewMessage.ExitKinestex -> {
-            viewModel.showWebView.postValue(WebViewState.ERROR) // to close the webview
+        is WebViewMessage.ExitKinestex -> lifecycleScope.launch {
+            viewModel.showWebView.emit(
+                WebViewState.ERROR
+            )
         }
-       
-        // CAMERA COMPONENT SPECIFIC
+
+        // FOR CAMERA SPECIFIC INTEGRATION GET NUMBER OF REPS IN REAL-TIME AND MISTAKES
         is WebViewMessage.Reps -> {
-            message.data["value"]?.let { viewModel.reps.value = it } // to update the rep count from CAMERA COMPONENT
+            (message.data["value"] as? Int)?.let { viewModel.setReps(it) }
         }
+
         is WebViewMessage.Mistake -> {
-            message.data["value"]?.let { viewModel.mistake.value = it }
+            (message.data["value"] as? String)?.let {
+                viewModel.setMistake(
+                    it
+                )
+            }
         }
-       
-       
+
         else -> {
-            // Handle other messages
+            // handle all other messages
+            Log.d("Message received", message.toString())
         }
     }
 }
+
 ```
 
 ### Updating the Current Exercise For Camera Component

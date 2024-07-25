@@ -29,6 +29,7 @@ import com.kinestex.kinestexsdkkotlin.WebViewMessage
 import com.kinestex.kotlin_sdk.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
+
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
@@ -220,7 +221,6 @@ class MainActivity : AppCompatActivity() {
                     null,
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
-
                     ::handleWebViewMessage
                 )
                 return webView
@@ -418,7 +418,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             else -> {
-
+               Log.d("Message received", message.toString())
             }
         }
     }
