@@ -210,7 +210,7 @@ class MainActivity : AppCompatActivity() {
             0 -> {
                 val data = mutableMapOf<String, Any>()
                 data["planC"] = "Strength" // passing forcefully the planCategory
-                data["isHideHeaderMain"] = true // should display header in main screen
+                data["isHideHeaderMain"] = false // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(
                     this,
