@@ -43,8 +43,8 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: WebView? = null
 
-    private val apiKey = "apiKey" // store this key securely
-    private val company = "your company"
+    private val apiKey = "API_KEY" // store this key securely
+    private val company = "COMPANY"
     private val userId = "user1"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -210,7 +210,7 @@ class MainActivity : AppCompatActivity() {
             0 -> {
                 val data = mutableMapOf<String, Any>()
                 data["planC"] = "Strength" // passing forcefully the planCategory
-                data["isHideHeaderMain"] = false // should display header in main screen
+                data["isHideHeaderMain"] = true // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(
                     this,

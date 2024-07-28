@@ -111,21 +111,19 @@ class KinesteXSDK {
                 Log.e("WebViewManager", "⚠️ Validation Error: $validationError")
                 return null
             } else {
-                val dataTotal = mutableMapOf<String, Any>(
+                val data = mutableMapOf<String, Any>(
                     "planC" to planCategoryString(planCategory)
                 )
 
                 user?.let {
-                    dataTotal["age"] = it.age
-                    dataTotal["height"] = it.height
-                    dataTotal["weight"] = it.weight
-                    dataTotal["gender"] = genderString(it.gender)
-                    dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
+                    data["age"] = it.age
+                    data["height"] = it.height
+                    data["weight"] = it.weight
+                    data["gender"] = genderString(it.gender)
+                    data["lifestyle"] = lifestyleString(it.lifestyle)
                 }
 
-                customParams?.let {
-                    dataTotal.putAll(customParams)
-                }
+                validateCustomParams(customParams, data)
 
                 return GenericWebView(
                     context = context,
@@ -133,7 +131,7 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex.vercel.app",
-                    data = dataTotal,
+                    data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -177,24 +175,24 @@ class KinesteXSDK {
                 val adjustedPlanName = planName.replace(" ", "%20")
                 val url =
                     "https://kinestex.vercel.app/plan/$adjustedPlanName"
-                val dataTotal = mutableMapOf<String, Any>()
+                val data = mutableMapOf<String, Any>()
 
                 user?.let {
-                    dataTotal["age"] = it.age
-                    dataTotal["height"] = it.height
-                    dataTotal["weight"] = it.weight
-                    dataTotal["gender"] = genderString(it.gender)
-                    dataTotal["lifestyle"] = lifestyleString(it.lifestyle)
+                    data["age"] = it.age
+                    data["height"] = it.height
+                    data["weight"] = it.weight
+                    data["gender"] = genderString(it.gender)
+                    data["lifestyle"] = lifestyleString(it.lifestyle)
                 }
-                customParams?.let {
-                    dataTotal.putAll(customParams)
-                }
+
+                validateCustomParams(customParams, data)
+
                 return GenericWebView(
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
                     url = url,
-                    data = dataTotal,
+                    data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,
                     context = context
@@ -240,7 +238,7 @@ class KinesteXSDK {
                 val url =
                     "https://kinestex.vercel.app/workout/$adjustedWorkoutName"
 
-                val dataTotal: MutableMap<String, Any> = mutableMapOf(
+                val data: MutableMap<String, Any> = mutableMapOf(
                     "age" to (user?.age ?: ""),
                     "height" to (user?.height ?: ""),
                     "weight" to (user?.weight ?: ""),
@@ -248,9 +246,8 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                customParams?.let {
-                    dataTotal.putAll(customParams)
-                }
+                validateCustomParams(customParams, data)
+
 
                 return GenericWebView(
                     context = context,
@@ -258,7 +255,7 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = url,
-                    data = dataTotal,
+                    data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -301,7 +298,7 @@ class KinesteXSDK {
                 )
                 return null
             } else {
-                val dataTotal: MutableMap<String, Any> = mutableMapOf(
+                val data: MutableMap<String, Any> = mutableMapOf(
                     "exercise" to exercise,
                     "countdown" to countdown,
                     "age" to (user?.age ?: ""),
@@ -311,9 +308,8 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                customParams?.let {
-                    dataTotal.putAll(customParams)
-                }
+                validateCustomParams(customParams, data)
+
 
                 return GenericWebView(
                     context = context,
@@ -321,7 +317,7 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex-challenge.vercel.app",
-                    data = dataTotal,
+                    data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
@@ -349,9 +345,12 @@ class KinesteXSDK {
                     return null
                 }
             }
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
+            if (containsDisallowedCharacters(apiKey)
+                || containsDisallowedCharacters(companyName)
+                || containsDisallowedCharacters(
                     userId
-                ) || containsDisallowedCharacters(currentExercise)
+                )
+                || containsDisallowedCharacters(currentExercise)
             ) {
                 Log.e(
                     "WebViewManager",
@@ -359,7 +358,7 @@ class KinesteXSDK {
                 )
                 return null
             } else {
-                val dataTotal: MutableMap<String, Any> = mutableMapOf(
+                val data: MutableMap<String, Any> = mutableMapOf(
                     "exercises" to exercises,
                     "currentExercise" to currentExercise,
                     "age" to (user?.age ?: ""),
@@ -369,9 +368,7 @@ class KinesteXSDK {
                     "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
                 )
 
-                customParams?.let {
-                    dataTotal.putAll(customParams)
-                }
+                validateCustomParams(customParams, data)
 
                 val cameraWebViewInstance = GenericWebView(
                     context = context,
@@ -379,13 +376,32 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex-camera-ai.vercel.app",
-                    data = dataTotal,
+                    data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived
                 )
 
                 cameraWebView = cameraWebViewInstance
                 return cameraWebViewInstance
+            }
+        }
+
+        private fun validateCustomParams(
+            customParams: MutableMap<String, Any>?,
+            data: MutableMap<String, Any>
+        ) {
+            customParams?.let {
+                for ((key, value) in customParams) {
+                    if (containsDisallowedCharacters(key) || (value as? String)?.let {
+                            containsDisallowedCharacters(
+                                it
+                            )
+                        } == true) {
+                        println("⚠️ Validation Error: Custom parameter key or value contains disallowed characters")
+                    } else {
+                        data[key] = value
+                    }
+                }
             }
         }
 
