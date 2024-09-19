@@ -25,7 +25,7 @@ Add the following permissions to your `AndroidManifest.xml`:
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
-<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.VIDEO_CAPTURE" />
 ```
 
 ### Project Setup
