@@ -1,5 +1,5 @@
-# [KinesteX AI SDK](https://kinestex.com)
-## INTEGRATE AI TRAINER IN YOUR APP IN MINUTES
+# [Precise Motion Tracking and Analysis SDK](https://kinestex.com)
+## Stay Ahead with KinesteX AI Motion Tracking.
 ### Easily transform your platform with our SDK: white-labeled workouts with precise motion tracking and real-time feedback tailored for accuracy and engagement
 
 
