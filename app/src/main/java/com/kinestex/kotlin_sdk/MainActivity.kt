@@ -43,8 +43,8 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: WebView? = null
 
-    private val apiKey = "api_key" // store this key securely
-    private val company = "company_name"
+    private val apiKey = "API_KEY" // store this key securely
+    private val company = "COMPANY_NAME"
     private val userId = "user1"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -63,6 +63,23 @@ class MainActivity : AppCompatActivity() {
         initUiListeners()
 
         observe()
+    }
+
+    private fun showHowToVideo() {
+        val howToView = KinesteXSDK.createHowToView(
+            context = this,
+            onVideoEnd = { didEnd ->
+                if (didEnd) {
+                    Toast.makeText(this, "How to view ended", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onCloseClick = {
+                binding.layVideo.removeAllViews()
+            }
+        )
+
+        // Add the howToView to your layout
+        binding.layVideo.addView(howToView)
     }
 
     private fun checkCameraPermission() {
@@ -136,6 +153,11 @@ class MainActivity : AppCompatActivity() {
             btnJumpingJack.setOnClickListener {
                 KinesteXSDK.updateCurrentExercise("Jumping Jack")
             }
+
+            btnTestVideo.setOnClickListener {
+                showHowToVideo()
+            }
+
         }
     }
 
@@ -209,7 +231,8 @@ class MainActivity : AppCompatActivity() {
         val view = when (viewModel.selectedOptionPosition.value) {
             0 -> {
                 val data = mutableMapOf<String, Any>()
-                data["planC"] = "Strength" // passing forcefully the planCategory
+
+                data["style"] = "light" // passing forcefully the style theme
                 // data["isHideHeaderMain"] = false // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(
@@ -227,6 +250,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             1 -> {
+
+                val data = mutableMapOf<String, Any>()
+                data["style"] = "light" // passing forcefully the planCategory
+
                 webView = KinesteXSDK.createPlanView(
                     this,
                     apiKey,
@@ -234,7 +261,7 @@ class MainActivity : AppCompatActivity() {
                     userId,
                     subOption ?: "Circuit Training",
                     null,
-                    null,
+                    data,
                     viewModel.isLoading,
                     ::handleWebViewMessage
                 )
@@ -386,7 +413,7 @@ class MainActivity : AppCompatActivity() {
             companyName = company,
             userId = userId,
             currentExercise = "Squats",
-            exercises = listOf("Squats","Jumping Jack"),
+            exercises = listOf("Squats", "Jumping Jack"),
             user = null,
             isLoading = viewModel.isLoading,
             onMessageReceived = ::handleWebViewMessage
@@ -418,7 +445,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             else -> {
-               Log.d("Message received", message.toString())
+                Log.d("Message received", message.toString())
             }
         }
     }

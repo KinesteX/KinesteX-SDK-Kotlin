@@ -39,7 +39,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.KinesteX"
                 artifactId = "kinestexsdkkotlin"
-                version = "1.1.1"
+                version = "1.1.2"
 
                 pom {
                     name.set("KinesteX SDK Kotlin")
@@ -82,6 +82,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
+    // ExoPlayer (Media3) dependencies
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.ui)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

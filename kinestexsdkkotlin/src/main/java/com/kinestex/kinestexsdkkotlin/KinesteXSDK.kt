@@ -2,7 +2,17 @@ package com.kinestex.kinestexsdkkotlin
 
 import android.content.Context
 import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebView
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import androidx.core.content.ContextCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
@@ -10,6 +20,79 @@ class KinesteXSDK {
     companion object {
 
         private var cameraWebView: GenericWebView? = null
+
+        private const val how_to_video_link =
+            "https://cdn.kinestex.com/SDK%2Fhow-to-video%2Fhowtovideo.webm?alt=media&token=9c1254eb-0726-4eed-b16e-4e3945c98b65"
+
+        private var videoPlayer: ExoPlayer? = null
+        fun createHowToView(
+            context: Context,
+            onVideoEnd: (Boolean) -> Unit,
+            videoURL: String? = how_to_video_link,  // Default value for videoURL
+            onCloseClick: () -> Unit
+        ): ViewGroup {
+            val frameLayout = FrameLayout(context)
+            frameLayout.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            videoPlayer = ExoPlayer.Builder(context).build()
+            val playerView = PlayerView(context)
+            playerView.player = videoPlayer
+            playerView.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            playerView.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener {
+                playerView.findViewById<View>(androidx.media3.ui.R.id.exo_next)?.visibility =
+                    View.GONE
+                playerView.findViewById<View>(androidx.media3.ui.R.id.exo_prev)?.visibility =
+                    View.GONE
+            })
+
+            frameLayout.addView(playerView)
+
+            val closeButton = ImageButton(context).apply {
+                setImageDrawable(
+                    ContextCompat.getDrawable(
+                        context,
+                        android.R.drawable.ic_menu_close_clear_cancel
+                    )
+                )
+                background = null
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    gravity = Gravity.TOP or Gravity.START
+                    setMargins(16, 16, 16, 16)
+                }
+                setOnClickListener {
+                    videoPlayer?.stop()
+                    videoPlayer?.release()
+                    onCloseClick()
+                }
+            }
+            frameLayout.addView(closeButton)
+
+            // Use the passed videoURL or the default one if not provided
+            val mediaItem = MediaItem.fromUri(videoURL ?: how_to_video_link)
+            videoPlayer?.setMediaItem(mediaItem)
+            videoPlayer?.prepare()
+            videoPlayer?.play()
+
+            videoPlayer?.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_ENDED) {
+                        onVideoEnd(true)
+                    }
+                }
+            })
+
+            return frameLayout
+        }
 
         private fun validateInput(
             apiKey: String,

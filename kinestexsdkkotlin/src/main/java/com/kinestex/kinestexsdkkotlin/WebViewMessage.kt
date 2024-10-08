@@ -19,3 +19,4 @@ sealed class WebViewMessage {
     data class WorkoutCompleted(val data: Map<String, Any>) : WebViewMessage()
 
 }
+

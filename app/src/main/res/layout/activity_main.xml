@@ -242,6 +242,15 @@
 
 
         </LinearLayout>
+
+        <Button
+            android:layout_marginTop="20dp"
+            android:id="@+id/btn_test_video"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:text="how to video"
+            android:visibility="visible" />
     </LinearLayout>
 
     <FrameLayout
@@ -275,9 +284,15 @@
 
     <Button
         android:id="@+id/btn_jumping_jack"
-        android:text="Jumping Jack"
-        android:visibility="gone"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="Jumping Jack"
+        android:visibility="gone" />
+
+
+    <FrameLayout
+        android:id="@+id/lay_video"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </FrameLayout>
