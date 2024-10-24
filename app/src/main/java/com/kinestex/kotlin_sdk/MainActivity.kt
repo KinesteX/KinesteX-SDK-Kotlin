@@ -43,9 +43,9 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: WebView? = null
 
-    private val apiKey = "API_KEY" // store this key securely
-    private val company = "COMPANY_NAME"
-    private val userId = "user1"
+    private val apiKey = apiKey // store this key securely
+    private val company = companyName
+    private val userId = userId
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         supportActionBar?.hide()
 
-        checkCameraPermission()
+       // checkCameraPermission()
 
         viewModel = ViewModelProvider(this)[ContentViewModel::class.java]
 
@@ -68,11 +68,13 @@ class MainActivity : AppCompatActivity() {
     private fun showHowToVideo() {
         val howToView = KinesteXSDK.createHowToView(
             context = this,
-            onVideoEnd = { didEnd ->
+            onVideoEnd = {
+                didEnd ->
                 if (didEnd) {
                     Toast.makeText(this, "How to view ended", Toast.LENGTH_SHORT).show()
                 }
             },
+            videoURL = "https://cdn.kinestex.com/SDK%2Fhow-to-video%2Foutput_compressed.mp4?alt=media&token=9a3c0ed8-c86b-4553-86dd-a96f23e55f74",
             onCloseClick = {
                 binding.layVideo.removeAllViews()
             }
@@ -232,7 +234,7 @@ class MainActivity : AppCompatActivity() {
             0 -> {
                 val data = mutableMapOf<String, Any>()
 
-                data["style"] = "light" // passing forcefully the style theme
+               // data["style"] = "light" // passing forcefully the style theme
                 // data["isHideHeaderMain"] = false // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(

@@ -1,9 +1,14 @@
 package com.kinestex.kinestexsdkkotlin
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import android.webkit.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONArray
 import org.json.JSONException
@@ -33,9 +38,31 @@ class GenericWebView(
 
         webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
-                request.grant(request.resources)
+                val requestedResources = request.resources
+
+                if (requestedResources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                ) {
+                    // Check if app-level permissions are granted before granting to the site
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                        PackageManager.PERMISSION_GRANTED
+                    ) {
+                        request.grant(requestedResources)
+                    } else {
+                        // Request app-level permissions if not granted yet
+                        ActivityCompat.requestPermissions(
+                            (context as Activity),
+                            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
+                            1010101
+                        )
+                        request.deny()  // Deny until permissions are granted
+                    }
+                } else {
+                    // Deny any other permissions
+                    request.deny()
+                }
             }
         }
+
 
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
