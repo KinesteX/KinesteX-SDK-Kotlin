@@ -51,7 +51,7 @@ class GenericWebView(
                         // Request app-level permissions if not granted yet
                         ActivityCompat.requestPermissions(
                             (context as Activity),
-                            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
+                            arrayOf(Manifest.permission.CAMERA),
                             1010101
                         )
                         request.deny()  // Deny until permissions are granted
