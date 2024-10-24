@@ -43,9 +43,9 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: WebView? = null
 
-    private val apiKey = apiKey // store this key securely
-    private val company = companyName
-    private val userId = userId
+    private val apiKey = "apiKey" // store this key securely
+    private val company = "companyName"
+    private val userId = "userId"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
