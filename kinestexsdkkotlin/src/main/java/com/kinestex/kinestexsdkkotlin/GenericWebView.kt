@@ -29,6 +29,9 @@ class GenericWebView(
     init {
         setupWebView()
     }
+    // Store the permission request to handle it after permission result
+    private var pendingCameraPermissionRequest: PermissionRequest? = null
+
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
@@ -36,45 +39,104 @@ class GenericWebView(
         settings.mediaPlaybackRequiresUserGesture = false
         settings.domStorageEnabled = true
 
+
         webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
-                val requestedResources = request.resources
+                Log.d("KinesteX SDK", "Permission request received: ${request.resources.contentToString()}")
 
-                if (requestedResources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
-                ) {
-                    // Check if app-level permissions are granted before granting to the site
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-                        PackageManager.PERMISSION_GRANTED
-                    ) {
-                        request.grant(requestedResources)
+                try {
+                    if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                        // Store the request for later use
+                        pendingCameraPermissionRequest = request
+
+                        // Check current permission status
+                        when {
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED -> {
+                                // If already granted, grant to WebView immediately
+                                Log.d("KinesteX SDK", "Camera permission already granted, granting to WebView")
+                                request.grant(request.resources)
+                            }
+                            (context as? Activity)?.shouldShowRequestPermissionRationale(
+                                Manifest.permission.CAMERA
+                            ) == true -> {
+                                // Optional: Show rationale if needed
+                                Log.d("KinesteX SDK", "Should show permission rationale")
+                                requestCameraPermission()
+                            }
+                            else -> {
+                                // Request permission
+                                Log.d("KinesteX SDK", "Requesting camera permission")
+                                requestCameraPermission()
+                            }
+                        }
                     } else {
-                        // Request app-level permissions if not granted yet
-                        ActivityCompat.requestPermissions(
-                            (context as Activity),
-                            arrayOf(Manifest.permission.CAMERA),
-                            1010101
-                        )
-                        request.deny()  // Deny until permissions are granted
+                        Log.d("KinesteX SDK", "Denying non-camera permission request")
+                        request.deny()
                     }
-                } else {
-                    // Deny any other permissions
+                } catch (e: Exception) {
+                    Log.e("KinesteX SDK", "Error handling permission request", e)
                     request.deny()
                 }
             }
         }
 
-
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 isLoading.value = false
-                Log.d("WebView", "Page finished loading")
+                Log.d("KinesteX SDK", "Page finished loading")
                 postMessage()
             }
         }
 
         addJavascriptInterface(JavaScriptInterface(), "messageHandler")
         loadUrl(url)
+    }
+
+    private fun requestCameraPermission() {
+        val activity = context as? Activity
+        if (activity != null) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_CODE
+            )
+        } else {
+            Log.e("KinesteX SDK", "Context is not an activity, cannot request permission")
+            pendingCameraPermissionRequest?.deny()
+            pendingCameraPermissionRequest = null
+        }
+    }
+
+    // Method to be called from Activity's onRequestPermissionsResult
+    fun handlePermissionResult(requestCode: Int, grantResults: IntArray) {
+        Log.d("KinesteX SDK", "Handling permission result: code=$requestCode, results=${grantResults.contentToString()}")
+
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            pendingCameraPermissionRequest?.let { request ->
+                try {
+                    if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        Log.d("KinesteX SDK", "Permission granted, granting to WebView")
+                        request.grant(request.resources)
+                    } else {
+                        Log.d("KinesteX SDK", "Permission denied, denying WebView request")
+                        request.deny()
+                    }
+                } catch (e: Exception) {
+                    Log.e("KinesteX SDK", "Error handling permission result", e)
+                    request.deny()
+                } finally {
+                    pendingCameraPermissionRequest = null
+                }
+            }
+        }
+    }
+
+    companion object {
+        const val CAMERA_PERMISSION_CODE = 1010101
     }
 
     private fun postMessage() {
@@ -102,7 +164,7 @@ class GenericWebView(
             })();
         """.trimIndent()
 
-        Log.d("WebView", "Executing script: $script")
+
         evaluateJavascript(script) { result ->
             Log.d("WebView", "Script execution result: $result")
         }

@@ -23,6 +23,9 @@ Welcome to the documentation for the KinesteX SDK for Kotlin. This SDK allows yo
 Add the following permissions to your `AndroidManifest.xml`:
 
 ```xml
+<uses-feature
+    android:name="android.hardware.camera"
+    android:required="false" />
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
 ```
@@ -45,7 +48,7 @@ dependencyResolutionManagement {
 Add the KinesteX SDK dependency in your app’s `build.gradle`:
 
 ```gradle
-implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.4")
+implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.5")
 
 ```
 
@@ -58,8 +61,8 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.4")
 2. **Launching the view**: To display KinesteX, we will be using WebView. To launch Complete UX call `createMainView` in KinesteXSDK:
 
    ```kotlin
-   private var kinesteXWebView: WebView? = null
-
+   private var kinesteXWebView: GenericWebView? = null
+   
    @SuppressLint("SetJavaScriptEnabled", "MissingInflatedId")
    override fun onCreate(savedInstanceState: Bundle?) {
        super.onCreate(savedInstanceState)
@@ -78,11 +81,25 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.4")
                     customParams = data, // example of using custom parameters. CAN BE NULL
                     viewModel.isLoading,
                     ::handleWebViewMessage
-                )
+                )  as GenericWebView?
    }
    ```
+   
+3. **Handling camera permission request**: We send a request for camera permissiona and it needs to be granted on app level:
+```kotlin   
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // handle the permission result on app level
+        kinesteXWebView?.handlePermissionResult(requestCode, grantResults)
+    }
 
-3. **Handling the data**: Use a ViewModel to handle changes:
+```
+
+4. **Handling the data**: Use a ViewModel to handle changes:
 
    ```kotlin
    class ContentViewModel : ViewModel() {
@@ -113,7 +130,7 @@ The KinesteX SDK provides multiple methods to create different views:
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
                     ::handleWebViewMessage // callback function to handle responses
-     )
+     )  as GenericWebView?
    ```
 
 - **Plan View (Stand-alone workout plan page)**:
@@ -129,7 +146,7 @@ The KinesteX SDK provides multiple methods to create different views:
                     null, // custom parameters is null
                     viewModel.isLoading,
                     ::handleWebViewMessage
-     )
+     )  as GenericWebView?
    ```
 
 - **Workout View (Individual workout page)**:
@@ -144,7 +161,7 @@ The KinesteX SDK provides multiple methods to create different views:
                     null, 
                     isLoading = viewModel.isLoading,
                     onMessageReceived = ::handleWebViewMessage
-   )
+   )  as GenericWebView?
    ```
 
 - **Challenge View**:
@@ -161,7 +178,7 @@ The KinesteX SDK provides multiple methods to create different views:
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage
-    )
+    )  as GenericWebView?
    ```
 
 - **Camera Component (Just camera + our motion analysis and feedback)**:
@@ -177,7 +194,7 @@ The KinesteX SDK provides multiple methods to create different views:
             user = null,
             isLoading = viewModel.isLoading,
             onMessageReceived = ::handleWebViewMessage
-   )
+   )  as GenericWebView?
    ```
 
 ### Handling Messages

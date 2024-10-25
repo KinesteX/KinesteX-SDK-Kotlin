@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.kinestex.kinestexsdkkotlin.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PlanCategory
 import com.kinestex.kinestexsdkkotlin.WebViewMessage
@@ -31,21 +32,18 @@ import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
-    }
-
     private var tvMistake: TextView? = null
     private var tvReps: TextView? = null
 
     private lateinit var viewModel: ContentViewModel
     private lateinit var binding: ActivityMainBinding
     private val iconSubOptions = mutableListOf<ImageView>()
-    private var webView: WebView? = null
+    private var webView: GenericWebView? = null
 
     private val apiKey = "apiKey" // store this key securely
     private val company = "companyName"
     private val userId = "userId"
+
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,14 +54,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         supportActionBar?.hide()
 
-       // checkCameraPermission()
-
         viewModel = ViewModelProvider(this)[ContentViewModel::class.java]
 
         initUiListeners()
 
         observe()
     }
+
 
     private fun showHowToVideo() {
         val howToView = KinesteXSDK.createHowToView(
@@ -84,52 +81,13 @@ class MainActivity : AppCompatActivity() {
         binding.layVideo.addView(howToView)
     }
 
-    private fun checkCameraPermission() {
-        val permission = CAMERA
-
-        if (ContextCompat.checkSelfPermission(
-                this, permission
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted, show rationale if necessary
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-                // You can show a custom rationale dialog here
-                AlertDialog.Builder(this).setTitle("Camera Permission Needed")
-                    .setMessage("This app requires access to the camera to take photos.")
-                    .setPositiveButton("OK") { _, _ ->
-                        // Request permission again
-                        ActivityCompat.requestPermissions(
-                            this, arrayOf(permission), CAMERA_PERMISSION_REQUEST_CODE
-                        )
-                    }.setNegativeButton("Cancel") { dialog, _ ->
-                        dialog.dismiss()
-                    }.create().show()
-            } else {
-                // No rationale needed, request the permission
-                ActivityCompat.requestPermissions(
-                    this, arrayOf(permission), CAMERA_PERMISSION_REQUEST_CODE
-                )
-            }
-        } else {
-            // Permission is already granted
-            onCameraPermissionGranted()
-        }
-    }
-
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            CAMERA_PERMISSION_REQUEST_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    onCameraPermissionGranted()
-                } else {
-                    Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
-                }
-                return
-            }
-        }
+        webView?.handlePermissionResult(requestCode, grantResults)
     }
 
     private fun onCameraPermissionGranted() {
@@ -247,7 +205,7 @@ class MainActivity : AppCompatActivity() {
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
                     ::handleWebViewMessage
-                )
+                ) as GenericWebView?
                 return webView
             }
 
@@ -266,7 +224,7 @@ class MainActivity : AppCompatActivity() {
                     data,
                     viewModel.isLoading,
                     ::handleWebViewMessage
-                )
+                ) as GenericWebView?
                 return webView
 
             }
@@ -281,7 +239,7 @@ class MainActivity : AppCompatActivity() {
                     null,
                     isLoading = viewModel.isLoading,
                     onMessageReceived = ::handleWebViewMessage
-                )
+                ) as GenericWebView?
                 return webView
             }
 
@@ -297,7 +255,7 @@ class MainActivity : AppCompatActivity() {
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage
-                )
+                ) as GenericWebView?
                 return webView
             }
 
@@ -419,7 +377,7 @@ class MainActivity : AppCompatActivity() {
             user = null,
             isLoading = viewModel.isLoading,
             onMessageReceived = ::handleWebViewMessage
-        )
+        ) as GenericWebView?
 
         webView?.let { container.addView(setLayoutParamsFullScreen(it)) }
 
