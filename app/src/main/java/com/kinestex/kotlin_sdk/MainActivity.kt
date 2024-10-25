@@ -1,10 +1,8 @@
 package com.kinestex.kotlin_sdk
 
-import android.Manifest.permission.CAMERA
+import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -13,25 +11,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
-import android.webkit.WebView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.kinestex.kinestexsdkkotlin.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
+import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.PlanCategory
 import com.kinestex.kinestexsdkkotlin.WebViewMessage
 import com.kinestex.kotlin_sdk.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), PermissionHandler {
     private var tvMistake: TextView? = null
     private var tvReps: TextView? = null
 
@@ -40,10 +37,18 @@ class MainActivity : AppCompatActivity() {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
 
-    private val apiKey = "apiKey" // store this key securely
-    private val company = "companyName"
+    private val apiKey = "apikey" // store this key securely
+    private val company = "companyname"
     private val userId = "userId"
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+       webView?.handlePermissionResult(isGranted)
+    }
+    override fun requestCameraPermission() {
+        requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,18 +86,6 @@ class MainActivity : AppCompatActivity() {
         binding.layVideo.addView(howToView)
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        webView?.handlePermissionResult(requestCode, grantResults)
-    }
-
-    private fun onCameraPermissionGranted() {
-//        Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show()
-    }
 
     private fun initUiListeners() {
         binding.apply {
@@ -204,7 +197,8 @@ class MainActivity : AppCompatActivity() {
                     null,
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage,
+                    this
                 ) as GenericWebView?
                 return webView
             }
@@ -223,7 +217,8 @@ class MainActivity : AppCompatActivity() {
                     null,
                     data,
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage,
+                    this
                 ) as GenericWebView?
                 return webView
 
@@ -238,7 +233,8 @@ class MainActivity : AppCompatActivity() {
                     subOption ?: "Fitness Lite",
                     null,
                     isLoading = viewModel.isLoading,
-                    onMessageReceived = ::handleWebViewMessage
+                    onMessageReceived = ::handleWebViewMessage,
+                    permissionHandler = this
                 ) as GenericWebView?
                 return webView
             }
@@ -254,7 +250,8 @@ class MainActivity : AppCompatActivity() {
                     null,
                     customParams = null,
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage,
+                    permissionHandler = this
                 ) as GenericWebView?
                 return webView
             }
@@ -376,7 +373,8 @@ class MainActivity : AppCompatActivity() {
             exercises = listOf("Squats", "Jumping Jack"),
             user = null,
             isLoading = viewModel.isLoading,
-            onMessageReceived = ::handleWebViewMessage
+            onMessageReceived = ::handleWebViewMessage,
+            permissionHandler = this
         ) as GenericWebView?
 
         webView?.let { container.addView(setLayoutParamsFullScreen(it)) }

@@ -58,11 +58,29 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.5")
 
 1. **Prerequisites**: Ensure you’ve added the necessary permissions in `AndroidManifest.xml`.
 
-2. **Launching the view**: To display KinesteX, we will be using WebView. To launch Complete UX call `createMainView` in KinesteXSDK:
+2. **Project setup**: When a user starts a workout, we need to present camera permission dialog. We are requesting camera permission on the app level and need to handle the result in the app level as well. 
+
+   2.1 Make sure your activity or fragment implements the `PermissionHandler` interface:
+   `class MainActivity : AppCompatActivity(), PermissionHandler`
+   2.2 Create necessary variables and override the `requestCameraPermission` method in `PermissionHandler` interface:
+   ```kotlin
+
+   private var kinesteXWebView: GenericWebView? = null
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        webView?.handlePermissionResult(isGranted)
+    }
+    
+   override fun requestCameraPermission() {
+        requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+   }
+   ```
+3. To launch Complete UX call `createMainView` in KinesteXSDK:
 
    ```kotlin
-   private var kinesteXWebView: GenericWebView? = null
-   
+  
    @SuppressLint("SetJavaScriptEnabled", "MissingInflatedId")
    override fun onCreate(savedInstanceState: Bundle?) {
        super.onCreate(savedInstanceState)
@@ -80,24 +98,11 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.5")
                     null,
                     customParams = data, // example of using custom parameters. CAN BE NULL
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage,
+                    permissionHandler = this
                 )  as GenericWebView?
    }
    ```
-   
-3. **Handling camera permission request**: We send a request for camera permissiona and it needs to be granted on app level:
-```kotlin   
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // handle the permission result on app level
-        kinesteXWebView?.handlePermissionResult(requestCode, grantResults)
-    }
-
-```
 
 4. **Handling the data**: Use a ViewModel to handle changes:
 
@@ -129,7 +134,8 @@ The KinesteX SDK provides multiple methods to create different views:
                     null, // user details
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
-                    ::handleWebViewMessage // callback function to handle responses
+                    ::handleWebViewMessage, // callback function to handle responses
+                    permissionHandler = this // permission handler
      )  as GenericWebView?
    ```
 
@@ -145,7 +151,8 @@ The KinesteX SDK provides multiple methods to create different views:
                     null,
                     null, // custom parameters is null
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage, 
+                    permissionHandler = this
      )  as GenericWebView?
    ```
 
@@ -160,7 +167,8 @@ The KinesteX SDK provides multiple methods to create different views:
                     "Fitness Lite", // name of the workout
                     null, 
                     isLoading = viewModel.isLoading,
-                    onMessageReceived = ::handleWebViewMessage
+                    onMessageReceived = ::handleWebViewMessage,
+                    permissionHandler = this
    )  as GenericWebView?
    ```
 
@@ -177,7 +185,8 @@ The KinesteX SDK provides multiple methods to create different views:
                     null, 
                     customParams = null,
                     viewModel.isLoading,
-                    ::handleWebViewMessage
+                    ::handleWebViewMessage,
+                    permissionHandler = this 
     )  as GenericWebView?
    ```
 
@@ -193,7 +202,8 @@ The KinesteX SDK provides multiple methods to create different views:
             exercises = listOf("Squats","Jumping Jack"), // exercises that user is expected to do
             user = null,
             isLoading = viewModel.isLoading,
-            onMessageReceived = ::handleWebViewMessage
+            onMessageReceived = ::handleWebViewMessage,
+            permissionHandler = this
    )  as GenericWebView?
    ```
 

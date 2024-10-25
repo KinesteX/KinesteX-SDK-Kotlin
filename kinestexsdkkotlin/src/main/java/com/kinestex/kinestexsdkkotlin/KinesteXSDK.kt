@@ -186,7 +186,8 @@ class KinesteXSDK {
             user: UserDetails?,
             customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
         ): WebView? {
             val validationError = validateInput(apiKey, companyName, userId, planCategory)
 
@@ -216,7 +217,8 @@ class KinesteXSDK {
                     url = "https://kinestex.vercel.app",
                     data = data,
                     isLoading = isLoading,
-                    onMessageReceived = onMessageReceived
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
                 )
             }
         }
@@ -243,7 +245,8 @@ class KinesteXSDK {
             user: UserDetails?,
             customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
         ): WebView? {
             if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
                     userId
@@ -278,7 +281,8 @@ class KinesteXSDK {
                     data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,
-                    context = context
+                    context = context,
+                    permissionHandler = permissionHandler
                 )
             }
         }
@@ -305,7 +309,8 @@ class KinesteXSDK {
             user: UserDetails?,
             customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
         ): WebView? {
             if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
                     userId
@@ -340,7 +345,8 @@ class KinesteXSDK {
                     url = url,
                     data = data,
                     isLoading = isLoading,
-                    onMessageReceived = onMessageReceived
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
                 )
             }
         }
@@ -369,7 +375,8 @@ class KinesteXSDK {
             user: UserDetails?,
             customParams: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
         ): WebView? {
             if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
                     userId
@@ -402,7 +409,8 @@ class KinesteXSDK {
                     url = "https://kinestex-challenge.vercel.app",
                     data = data,
                     isLoading = isLoading,
-                    onMessageReceived = onMessageReceived
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
                 )
             }
         }
@@ -417,7 +425,8 @@ class KinesteXSDK {
             user: UserDetails?,
             customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
         ): WebView? {
             for (exercise in exercises) {
                 if (containsDisallowedCharacters(exercise)) {
@@ -461,7 +470,8 @@ class KinesteXSDK {
                     url = "https://kinestex-camera-ai.vercel.app",
                     data = data,
                     isLoading = isLoading,
-                    onMessageReceived = onMessageReceived
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
                 )
 
                 cameraWebView = cameraWebViewInstance

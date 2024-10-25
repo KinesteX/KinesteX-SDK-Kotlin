@@ -1,14 +1,9 @@
 package com.kinestex.kinestexsdkkotlin
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
 import android.webkit.*
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONArray
 import org.json.JSONException
@@ -23,7 +18,8 @@ class GenericWebView(
     private val url: String,
     private val onMessageReceived: (WebViewMessage) -> Unit,
     private val isLoading: MutableStateFlow<Boolean>,
-    private val data: Map<String, Any>
+    private val data: Map<String, Any>,
+    private val permissionHandler: PermissionHandler
 ) : WebView(context) {
 
     init {
@@ -49,36 +45,19 @@ class GenericWebView(
                         // Store the request for later use
                         pendingCameraPermissionRequest = request
 
-                        // Check current permission status
-                        when {
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED -> {
-                                // If already granted, grant to WebView immediately
-                                Log.d("KinesteX SDK", "Camera permission already granted, granting to WebView")
-                                request.grant(request.resources)
-                            }
-                            (context as? Activity)?.shouldShowRequestPermissionRationale(
-                                Manifest.permission.CAMERA
-                            ) == true -> {
-                                // Optional: Show rationale if needed
-                                Log.d("KinesteX SDK", "Should show permission rationale")
-                                requestCameraPermission()
-                            }
-                            else -> {
-                                // Request permission
-                                Log.d("KinesteX SDK", "Requesting camera permission")
-                                requestCameraPermission()
-                            }
+                        if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                            pendingCameraPermissionRequest = request
+                            permissionHandler.requestCameraPermission()
+                        } else {
+                            request.deny()
                         }
                     } else {
                         Log.d("KinesteX SDK", "Denying non-camera permission request")
-                        request.deny()
+                        request.grant(request.resources)
                     }
                 } catch (e: Exception) {
                     Log.e("KinesteX SDK", "Error handling permission request", e)
-                    request.deny()
+                    request.grant(request.resources)
                 }
             }
         }
@@ -96,33 +75,13 @@ class GenericWebView(
         loadUrl(url)
     }
 
-    private fun requestCameraPermission() {
-        val activity = context as? Activity
-        if (activity != null) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_CODE
-            )
-        } else {
-            Log.e("KinesteX SDK", "Context is not an activity, cannot request permission")
-            pendingCameraPermissionRequest?.deny()
-            pendingCameraPermissionRequest = null
-        }
-    }
-
     // Method to be called from Activity's onRequestPermissionsResult
-    fun handlePermissionResult(requestCode: Int, grantResults: IntArray) {
-        Log.d("KinesteX SDK", "Handling permission result: code=$requestCode, results=${grantResults.contentToString()}")
-
-        if (requestCode == CAMERA_PERMISSION_CODE) {
+    fun handlePermissionResult(granted: Boolean) {
             pendingCameraPermissionRequest?.let { request ->
                 try {
-                    if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.d("KinesteX SDK", "Permission granted, granting to WebView")
+                   if (granted) {
                         request.grant(request.resources)
                     } else {
-                        Log.d("KinesteX SDK", "Permission denied, denying WebView request")
                         request.deny()
                     }
                 } catch (e: Exception) {
@@ -132,11 +91,7 @@ class GenericWebView(
                     pendingCameraPermissionRequest = null
                 }
             }
-        }
-    }
 
-    companion object {
-        const val CAMERA_PERMISSION_CODE = 1010101
     }
 
     private fun postMessage() {
