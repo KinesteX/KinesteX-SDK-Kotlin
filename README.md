@@ -48,7 +48,7 @@ dependencyResolutionManagement {
 Add the KinesteX SDK dependency in your app’s `build.gradle`:
 
 ```gradle
-implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.5")
+implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.6")
 
 ```
 
