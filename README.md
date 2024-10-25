@@ -70,7 +70,7 @@ implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.6")
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        webView?.handlePermissionResult(isGranted)
+        kinestexWebView?.handlePermissionResult(isGranted)
     }
     
    override fun requestCameraPermission() {
