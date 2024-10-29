@@ -406,7 +406,56 @@ class KinesteXSDK {
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
-                    url = "https://kinestex-challenge.vercel.app",
+                    url = "https://kinestex.vercel.app/challenge",
+                    data = data,
+                    isLoading = isLoading,
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
+                )
+            }
+        }
+
+        fun createExperiencesView(
+            context: Context,
+            apiKey: String,
+            companyName: String,
+            userId: String,
+            experienceName: String,
+            countdown: Int,
+            user: UserDetails?,
+            customParams: MutableMap<String, Any>?,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
+                    userId
+                ) || containsDisallowedCharacters(experienceName)
+            ) {
+                Log.e(
+                    "WebViewManager",
+                    "Validation Error: apiKey, companyName, userId, or exercise contains disallowed characters"
+                )
+                return null
+            } else {
+                val data: MutableMap<String, Any> = mutableMapOf(
+                    "countdown" to countdown,
+                    "age" to (user?.age ?: ""),
+                    "height" to (user?.height ?: ""),
+                    "weight" to (user?.weight ?: ""),
+                    "gender" to (user?.gender?.let { genderString(it) } ?: ""),
+                    "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
+                )
+
+                validateCustomParams(customParams, data)
+
+
+                return GenericWebView(
+                    context = context,
+                    apiKey = apiKey,
+                    companyName = companyName,
+                    userId = userId,
+                    url = "https://kinestex.vercel.app/experiences/${experienceName.lowercase()}",
                     data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,

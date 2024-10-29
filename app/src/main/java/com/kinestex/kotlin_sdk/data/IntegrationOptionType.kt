@@ -1,4 +1,5 @@
 package com.kinestex.kotlin_sdk.data
+
 enum class IntegrationOptionType(
     val title: String, val category: String, val subOptions: List<String>?
 ) {
@@ -20,6 +21,9 @@ enum class IntegrationOptionType(
     ),
     CAMERA(
         "Camera", "", null
+    ),
+    EXPERIENCE(
+        "Experience", "Experience", listOf("Box")
     );
 
     companion object {

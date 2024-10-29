@@ -37,8 +37,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
 
-    private val apiKey = "apikey" // store this key securely
-    private val company = "companyname"
+    private val apiKey = "apiKey" // store this key securely
+    private val company = "company"
     private val userId = "userId"
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -102,6 +102,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             workoutPlan.setOnClickListener { handleOptionSelection(1, iconRadioWorkoutPlan) }
             workout.setOnClickListener { handleOptionSelection(2, iconRadioWorkout) }
             challenge.setOnClickListener { handleOptionSelection(3, iconRadioChallenge) }
+            experience.setOnClickListener { handleOptionSelection(5, iconRadioExperience) }
             camera.setOnClickListener { handleOptionSelection(4, iconRadioCamera) }
             btnJumpingJack.setOnClickListener {
                 KinesteXSDK.updateCurrentExercise("Jumping Jack")
@@ -136,13 +137,16 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
     private fun uncheckOldPosition() {
         val currentPosition = viewModel.selectedOptionPosition.value
+
         val icons = listOf(
             binding.iconRadioCompleteUx,
             binding.iconRadioWorkoutPlan,
             binding.iconRadioWorkout,
             binding.iconRadioChallenge,
-            binding.iconRadioCamera
+            binding.iconRadioCamera,
+            binding.iconRadioExperience
         )
+
         icons[currentPosition].setImageResource(R.drawable.radio_unchecked)
     }
 
@@ -241,6 +245,23 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
             3 -> {
                 webView = KinesteXSDK.createChallengeView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    subOption ?: "",
+                    100,
+                    null,
+                    customParams = null,
+                    viewModel.isLoading,
+                    ::handleWebViewMessage,
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
+
+            5 -> {
+                webView = KinesteXSDK.createExperiencesView(
                     this,
                     apiKey,
                     company,
