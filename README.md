@@ -48,7 +48,7 @@ dependencyResolutionManagement {
 Add the KinesteX SDK dependency in your app’s `build.gradle`:
 
 ```gradle
-implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.6")
+implementation("com.github.KinesteX:KinesteXSDKKotlin:1.1.7")
 
 ```
 
@@ -187,6 +187,23 @@ The KinesteX SDK provides multiple methods to create different views:
                     viewModel.isLoading,
                     ::handleWebViewMessage,
                     permissionHandler = this 
+    )  as GenericWebView?
+   ```
+
+- **Experiences View**:
+
+   ```kotlin
+    kinesteXWebView = KinesteXSDK.createExperiencesView(
+                    apiKey,
+                    company,
+                    userId,
+                    "box", // name of the experience
+                    100, // duration of the experience
+                    null,
+                    customParams = null,
+                    viewModel.isLoading,
+                    ::handleWebViewMessage,
+                    permissionHandler = this
     )  as GenericWebView?
    ```
 
