@@ -81,6 +81,8 @@ dependencies {
     testImplementation(libs.junit)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
     // ExoPlayer (Media3) dependencies
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.dash)

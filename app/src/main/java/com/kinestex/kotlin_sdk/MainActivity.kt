@@ -19,13 +19,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.gson.GsonBuilder
+import com.kinestex.kinestexsdkkotlin.APIContentResult
+import com.kinestex.kinestexsdkkotlin.ContentType
 import com.kinestex.kinestexsdkkotlin.GenericWebView
+import com.kinestex.kinestexsdkkotlin.KinesteXAPI
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.PlanCategory
 import com.kinestex.kinestexsdkkotlin.WebViewMessage
 import com.kinestex.kotlin_sdk.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity(), PermissionHandler {
@@ -37,8 +43,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
 
-    private val apiKey = "apiKey" // store this key securely
-    private val company = "company"
+    private val apiKey = "your_api_key" // store this key securely
+    private val company = "your_company_name"
     private val userId = "userId"
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -111,9 +117,108 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             btnTestVideo.setOnClickListener {
                 showHowToVideo()
             }
+            btnApiRequest.setOnClickListener {
+                lifecycleScope.launch {
+                    try {
+                        // Show loading state if needed
+                        // binding.progressBar.visibility = View.VISIBLE
+
+                        // Switch to IO dispatcher for network request
+                        val result = withContext(Dispatchers.IO) {
+                            fetchContent(apiKey, company, contentType = ContentType.PLAN, title = "Circuit Training")
+
+                            // FOR FETCHING WORKOUT
+                            // fetchContent(apiKey, company, contentType = ContentType.WORKOUT, title = "Fitness Lite")
+
+                            // FOR FETCHING EXERCISE
+                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, title = "Squats")
+                        }
+
+                        // Handle the result on the main thread
+                        handleAPIResult(result)
+                    } catch (e: Exception) {
+                        // Handle any errors
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Error: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } finally {
+                        // Hide loading state if needed
+                        // binding.progressBar.visibility = View.GONE
+                    }
+                }
+            }
 
         }
     }
+
+        private suspend fun fetchContent(apiKey: String, companyName: String, contentType: ContentType, id: String? = null, title: String? = null): APIContentResult {
+            return KinesteXAPI.fetchAPIContentData(
+                apiKey = apiKey,
+                companyName = companyName,
+                contentType = contentType,
+                title = title,
+                id = id
+            )
+        }
+
+        private fun handleAPIResult(result: APIContentResult) {
+            when (result) {
+                is APIContentResult.Workout -> {
+                    // Handle successful workout data
+                    val workout = result.workout
+                    // Create a Gson instance with pretty printing
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(workout)
+
+                    // Print the formatted JSON string
+                    println("Workout Data:\n$prettyJson")
+                }
+                is APIContentResult.Plan -> {
+                    // Handle successful workout data
+                    val workout = result.plan
+                    // Create a Gson instance with pretty printing
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(workout)
+
+                    // Print the formatted JSON string
+                    println("Plan Data:\n$prettyJson")
+                }
+                is APIContentResult.Exercise -> {
+                    // Handle successful workout data
+                    val workout = result.exercise
+                    // Create a Gson instance with pretty printing
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(workout)
+
+                    // Print the formatted JSON string
+                    println("Exercise Data:\n$prettyJson")
+                }
+                is APIContentResult.Error -> {
+                    // Handle error
+                    Toast.makeText(
+                        this,
+                        "Error: ${result.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                else -> {
+                    // Handle unexpected result type
+                    Toast.makeText(
+                        this,
+                        "Unexpected result type",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
 
     private fun handleNextButton() {
         createWebView()?.let { view ->

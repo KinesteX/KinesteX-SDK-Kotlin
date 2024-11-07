@@ -145,7 +145,8 @@ class KinesteXSDK {
                 '.',
                 '#',
                 '<',
-                '>'
+                '>',
+                '`'
             )
             return input.any { it in disallowedCharacters }
         }
