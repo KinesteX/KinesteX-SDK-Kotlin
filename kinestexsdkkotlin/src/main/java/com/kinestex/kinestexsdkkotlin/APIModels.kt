@@ -116,7 +116,10 @@ data class PlanDay(
 
 data class WorkoutSummary(
     val title: String,
-    val id: String
+    val id: String,
+    val imgURL: String,
+    val calories: Double?,
+    val total_minutes: Int?
 )
 
 enum class ContentType(val value: String) {
