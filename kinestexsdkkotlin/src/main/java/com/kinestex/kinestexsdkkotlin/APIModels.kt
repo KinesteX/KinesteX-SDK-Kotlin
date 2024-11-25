@@ -5,11 +5,56 @@ import com.google.gson.JsonSyntaxException
 
 // API Result sealed class for handling different response types
 sealed class APIContentResult {
+    data class Workouts(val workouts: WorkoutsResponse) : APIContentResult()
     data class Workout(val workout: WorkoutModel) : APIContentResult()
+    data class Plans(val plans: PlansResponse) : APIContentResult()
     data class Plan(val plan: PlanModel) : APIContentResult()
+    data class Exercises(val exercises: ExerciseResponse) : APIContentResult()
     data class Exercise(val exercise: ExerciseModel) : APIContentResult()
     data class Error(val message: String) : APIContentResult()
 }
+
+data class WorkoutsResponse(
+    val workouts: List<WorkoutModel>,
+    val lastDocId: String
+)
+
+data class ExerciseResponse(
+    val exercises: List<ExerciseModel>,
+    val lastDocId: String
+)
+
+data class PlansResponse(
+    val plans: List<PlanModel>,
+    val lastDocId: String
+)
+
+enum class BodyPart(val value: String) {
+    ABS("Abs"),
+    BICEPS("Biceps"),
+    CALVES("Calves"),
+    CHEST("Chest"),
+    EXTERNAL_OBLIQUE("External Oblique"),
+    FOREARMS("Forearms"),
+    GLUTES("Glutes"),
+    NECK("Neck"),
+    QUADS("Quads"),
+    SHOULDERS("Shoulders"),
+    TRICEPS("Triceps"),
+    HAMSTRINGS("Hamstrings"),
+    LATS("Lats"),
+    LOWER_BACK("Lower Back"),
+    TRAPS("Traps"),
+    FULL_BODY("Full Body");
+
+    companion object {
+        fun fromValue(value: String): BodyPart? {
+            return values().find { it.value.equals(value, ignoreCase = true) }
+        }
+    }
+}
+
+
 
 // Models
 data class WorkoutModel(
@@ -120,6 +165,16 @@ private data class RawSequenceItem(
     val workout_countdown: Int?
 )
 
+private data class WorkoutsResponseRaw(
+    val workouts: List<RawWorkoutData>,
+    val lastDocId: String
+)
+
+private data class ExerciseResponseRaw(
+    val exercises: List<RawSequenceItem>,
+    val lastDocId: String
+)
+
 // Data processing utility object
 object DataProcessor {
     private val gson = Gson()
@@ -130,6 +185,77 @@ object DataProcessor {
             gson.fromJson(data, PlanModel::class.java)
         } catch (e: JsonSyntaxException) {
             println("Error parsing Plan data: ${e.message}")
+            throw e
+        }
+    }
+
+
+    // Process array of Workouts
+    @Throws(Exception::class)
+    fun processWorkoutsArray(data: String): WorkoutsResponse {
+        return try {
+            val workoutsResponseRaw = gson.fromJson(data, WorkoutsResponseRaw::class.java)
+            val workoutModels = workoutsResponseRaw.workouts.map { rawWorkout ->
+                WorkoutModel(
+                    id = rawWorkout.id,
+                    title = rawWorkout.title,
+                    img_URL = rawWorkout.workout_desc_img,
+                    category = rawWorkout.category,
+                    description = rawWorkout.description,
+                    total_minutes = rawWorkout.total_minutes,
+                    total_calories = rawWorkout.calories,
+                    body_parts = rawWorkout.body_parts,
+                    dif_level = rawWorkout.dif_level,
+                    sequence = processSequence(rawWorkout.sequence)
+                )
+            }
+            WorkoutsResponse(workouts = workoutModels, lastDocId = workoutsResponseRaw.lastDocId)
+        } catch (e: JsonSyntaxException) {
+            println("Error parsing Workouts array: ${e.message}")
+            throw e
+        }
+    }
+
+    // Process array of Exercises
+    @Throws(Exception::class)
+    fun processExercisesArray(data: String): ExerciseResponse {
+        return try {
+            val exerciseResponseRaw = gson.fromJson(data, ExerciseResponseRaw::class.java)
+            val exercises = exerciseResponseRaw.exercises.map { item ->
+                ExerciseModel(
+                    id = item.id ?: "NA",
+                    title = item.title,
+                    thumbnail_URL = item.thumbnail_URL ?: "",
+                    video_URL = item.video_URL ?: "",
+                    workout_countdown = item.workout_countdown,
+                    workout_reps = item.workout_repeats,
+                    avg_reps = item.repeats,
+                    avg_countdown = item.countdown,
+                    rest_duration = 10,
+                    avg_cal = item.calories,
+                    body_parts = item.body_parts ?: emptyList(),
+                    description = item.description ?: "Missing exercise description",
+                    dif_level = item.dif_level ?: "Medium",
+                    common_mistakes = item.common_mistakes ?: "",
+                    steps = processSteps(item.steps),
+                    tips = item.tips ?: ""
+                )
+            }
+            ExerciseResponse(exercises = exercises, lastDocId = exerciseResponseRaw.lastDocId)
+        } catch (e: JsonSyntaxException) {
+            println("Error parsing Exercises array: ${e.message}")
+            throw e
+        }
+    }
+
+    // Process array of Plans
+    @Throws(Exception::class)
+    fun processPlansArray(data: String): PlansResponse {
+        return try {
+            val plansResponse = gson.fromJson(data, PlansResponse::class.java)
+            plansResponse
+        } catch (e: JsonSyntaxException) {
+            println("Error parsing Plans array: ${e.message}")
             throw e
         }
     }

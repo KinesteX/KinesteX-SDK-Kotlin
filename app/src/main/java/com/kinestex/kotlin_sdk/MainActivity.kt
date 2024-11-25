@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.GsonBuilder
 import com.kinestex.kinestexsdkkotlin.APIContentResult
+import com.kinestex.kinestexsdkkotlin.BodyPart
 import com.kinestex.kinestexsdkkotlin.ContentType
 import com.kinestex.kinestexsdkkotlin.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXAPI
@@ -122,10 +123,21 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     try {
                         // Show loading state if needed
                         // binding.progressBar.visibility = View.VISIBLE
-
                         // Switch to IO dispatcher for network request
+
                         val result = withContext(Dispatchers.IO) {
-                            fetchContent(apiKey, company, contentType = ContentType.PLAN, title = "Circuit Training")
+                           // FOR FETCHING PLANS LIST
+                            fetchContent(apiKey, company, contentType = ContentType.PLAN, category = "Cardio", limit = 5)
+
+                            // FOR FETCHING WORKOUTS LIST (with category and body parts)
+                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, category = "Fitness", limit = 5)
+                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, bodyParts = listOf(BodyPart.ABS), limit = 5)
+
+                            // FOR FETCHING EXERCISES LIST (with body parts)
+                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, bodyParts = listOf(BodyPart.ABS), limit = 5)
+
+                            // FOR FETCHING PLAN
+                            // fetchContent(apiKey, company, contentType = ContentType.PLAN, title = "Circuit Training")
 
                             // FOR FETCHING WORKOUT
                             // fetchContent(apiKey, company, contentType = ContentType.WORKOUT, title = "Fitness Lite")
@@ -153,13 +165,20 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         }
     }
 
-        private suspend fun fetchContent(apiKey: String, companyName: String, contentType: ContentType, id: String? = null, title: String? = null): APIContentResult {
+        private suspend fun fetchContent(apiKey: String, companyName: String, contentType: ContentType,
+                                         id: String? = null, title: String? = null,
+                                         bodyParts: List<BodyPart>? = null, lastDocId: String? = null,
+                                         category: String? = null, limit: Int? = null): APIContentResult {
             return KinesteXAPI.fetchAPIContentData(
                 apiKey = apiKey,
                 companyName = companyName,
                 contentType = contentType,
                 title = title,
-                id = id
+                id = id,
+                bodyParts = bodyParts,
+                lastDocId = lastDocId,
+                category = category,
+                limit = limit
             )
         }
 
@@ -201,7 +220,39 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     // Print the formatted JSON string
                     println("Exercise Data:\n$prettyJson")
                 }
+                is APIContentResult.Workouts -> {
+
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(result.workouts)
+
+                    // Print the formatted JSON string
+                    println("Workouts Data:\n$prettyJson")
+                }
+                is APIContentResult.Plans -> {
+
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(result.plans)
+
+                    // Print the formatted JSON string
+                    println("Plans Data:\n$prettyJson")
+                }
+
+                is APIContentResult.Exercises -> {
+
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+
+                    // Convert the workout object to a pretty JSON string
+                    val prettyJson = gson.toJson(result.exercises)
+
+                    // Print the formatted JSON string
+                    println("Exercises Data:\n$prettyJson")
+                }
                 is APIContentResult.Error -> {
+                    println("ERROR: ${result.message}")
                     // Handle error
                     Toast.makeText(
                         this,

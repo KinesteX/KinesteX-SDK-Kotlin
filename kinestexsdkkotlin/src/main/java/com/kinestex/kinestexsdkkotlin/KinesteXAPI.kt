@@ -18,6 +18,10 @@ class KinesteXAPI {
          * @param id Optional unique identifier for the content
          * @param title Optional title to search for content
          * @param lang Language for the content (defaults to "en")
+         * @param category Optional category filter
+         * @param lastDocId Optional last document ID for pagination
+         * @param limit Optional limit for number of results
+         * @param bodyParts Optional list of body parts to filter by
          * @return Result containing either the requested content or an error message
          */
         suspend fun fetchAPIContentData(
@@ -26,7 +30,11 @@ class KinesteXAPI {
             contentType: ContentType,
             id: String? = null,
             title: String? = null,
-            lang: String = "en"
+            lang: String = "en",
+            category: String? = null,
+            lastDocId: String? = null,
+            limit: Int? = null,
+            bodyParts: List<BodyPart>? = null
         ): APIContentResult {
             // Validation checks
             if (containsDisallowedCharacters(apiKey) ||
@@ -47,6 +55,18 @@ class KinesteXAPI {
                 }
             }
 
+            category?.let {
+                if (containsDisallowedCharacters(it)) {
+                    return APIContentResult.Error("⚠️ Error: Category contains disallowed characters")
+                }
+            }
+
+            lastDocId?.let {
+                if (containsDisallowedCharacters(it)) {
+                    return APIContentResult.Error("⚠️ Error: LastDocID contains disallowed characters")
+                }
+            }
+
             // Determine endpoint
             val endpoint = when (contentType) {
                 ContentType.WORKOUT -> "workouts"
@@ -57,13 +77,19 @@ class KinesteXAPI {
             // Construct URL
             val urlBuilder = StringBuilder(BASE_API_URL).append(endpoint)
             id?.let { urlBuilder.append("/$it") }
+            title?.let { urlBuilder.append("/$it") }
 
             val url = Uri.parse(urlBuilder.toString()).buildUpon().apply {
-                title?.let { appendQueryParameter("title", it) }
                 appendQueryParameter("lang", lang)
+                category?.let { appendQueryParameter("category", it) }
+                lastDocId?.let { appendQueryParameter("lastDocId", it) }
+                limit?.let { appendQueryParameter("limit", it.toString()) }
+                bodyParts?.let {
+                    val bodyPartsString = it.joinToString(",") { part -> part.value }
+                    appendQueryParameter("body_parts", bodyPartsString)
+                }
             }.build().toString()
-
-
+            println("URL: $url")
             return try {
                 val client = OkHttpClient()
                 val request = Request.Builder()
@@ -77,18 +103,37 @@ class KinesteXAPI {
 
                     if (response.isSuccessful && responseBody != null) {
                         try {
-                            when (contentType) {
-                                ContentType.WORKOUT -> {
-                                    val workout = DataProcessor.processWorkoutData(responseBody)
-                                    APIContentResult.Workout(workout)
+                            if (category != null || bodyParts != null || lastDocId != null) {
+                                // Handle array responses
+                                when (contentType) {
+                                    ContentType.WORKOUT -> {
+                                        val workouts = DataProcessor.processWorkoutsArray(responseBody)
+                                        APIContentResult.Workouts(workouts)
+                                    }
+                                    ContentType.PLAN -> {
+                                        val plans = DataProcessor.processPlansArray(responseBody)
+                                        APIContentResult.Plans(plans)
+                                    }
+                                    ContentType.EXERCISE -> {
+                                        val exercises = DataProcessor.processExercisesArray(responseBody)
+                                        APIContentResult.Exercises(exercises)
+                                    }
                                 }
-                                ContentType.PLAN -> {
-                                    val plan = DataProcessor.processPlanData(responseBody)
-                                    APIContentResult.Plan(plan)
-                                }
-                                ContentType.EXERCISE -> {
-                                    val exercise = DataProcessor.processExerciseData(responseBody)
-                                    APIContentResult.Exercise(exercise)
+                            } else {
+                                // Handle single item responses
+                                when (contentType) {
+                                    ContentType.WORKOUT -> {
+                                        val workout = DataProcessor.processWorkoutData(responseBody)
+                                        APIContentResult.Workout(workout)
+                                    }
+                                    ContentType.PLAN -> {
+                                        val plan = DataProcessor.processPlanData(responseBody)
+                                        APIContentResult.Plan(plan)
+                                    }
+                                    ContentType.EXERCISE -> {
+                                        val exercise = DataProcessor.processExerciseData(responseBody)
+                                        APIContentResult.Exercise(exercise)
+                                    }
                                 }
                             }
                         } catch (e: Exception) {
@@ -111,23 +156,8 @@ class KinesteXAPI {
 
         private fun containsDisallowedCharacters(text: String): Boolean {
             val disallowedCharacters = setOf(
-                '<',
-                '>',
-                '{',
-                '}',
-                '(',
-                ')',
-                '[',
-                ']',
-                ';',
-                '"',
-                '\'',
-                '$',
-                '.',
-                '#',
-                '<',
-                '>',
-                '`'
+                '<', '>', '{', '}', '(', ')', '[', ']', ';', '"', '\'',
+                '$', '.', '#', '<', '>', '`'
             )
             return text.any { it in disallowedCharacters }
         }
