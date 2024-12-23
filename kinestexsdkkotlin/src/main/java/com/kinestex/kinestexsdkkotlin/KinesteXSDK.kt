@@ -517,7 +517,7 @@ class KinesteXSDK {
                     apiKey = apiKey,
                     companyName = companyName,
                     userId = userId,
-                    url = "https://kinestex-camera-ai.vercel.app",
+                    url = "https://kinestex.vercel.app/camera",
                     data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,
