@@ -8,7 +8,7 @@
 
 #### AndroidManifest.xml
 
-Add the following keys for camera and microphone usage:
+Add the following keys for camera usage:
 
 ```xml
 <uses-feature
