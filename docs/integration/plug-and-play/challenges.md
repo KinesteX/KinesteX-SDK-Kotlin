@@ -24,7 +24,8 @@ You can find exercises in our library [here](https://workout-view.kinestex.com/?
                     data, // custom parameters or null
                     viewModel.isLoading,
                     ::handleWebViewMessage,
-                    permissionHandler = this 
+                    permissionHandler = this,
+                    showLeaderboard = true // show leaderboard after challenge completion (default true)
     )  as GenericWebView?
    ```
 

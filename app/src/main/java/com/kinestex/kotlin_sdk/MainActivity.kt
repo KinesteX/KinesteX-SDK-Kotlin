@@ -441,7 +441,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     company,
                     userId,
                     "Squats",
-                    "", // optional username
+                    username = "", // optional username
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
