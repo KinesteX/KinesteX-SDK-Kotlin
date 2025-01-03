@@ -24,6 +24,9 @@ enum class IntegrationOptionType(
     ),
     EXPERIENCE(
         "Experience", "Experience", listOf("Box")
+    ),
+    LEADERBOARD(
+        "Leaderboard", "", null
     );
 
     companion object {

@@ -160,6 +160,7 @@
 
                 </LinearLayout>
 
+
                 <LinearLayout
                     android:id="@+id/experience"
                     android:layout_width="match_parent"
@@ -186,6 +187,7 @@
 
                 </LinearLayout>
 
+
                 <LinearLayout
                     android:id="@+id/camera"
                     android:layout_width="match_parent"
@@ -205,6 +207,32 @@
 
                     <ImageView
                         android:id="@+id/icon_radio_camera"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/radio_unchecked" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/leaderboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="7dp">
+
+                    <TextView
+                        android:id="@+id/text_leaderboard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:text="Leaderboard"
+                        android:textColor="@color/white" />
+
+                    <ImageView
+                        android:id="@+id/icon_leaderboard"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"

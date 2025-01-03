@@ -109,6 +109,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             workoutPlan.setOnClickListener { handleOptionSelection(1, iconRadioWorkoutPlan) }
             workout.setOnClickListener { handleOptionSelection(2, iconRadioWorkout) }
             challenge.setOnClickListener { handleOptionSelection(3, iconRadioChallenge) }
+            leaderboard.setOnClickListener { handleOptionSelection(6, iconLeaderboard) }
             experience.setOnClickListener { handleOptionSelection(5, iconRadioExperience) }
             camera.setOnClickListener { handleOptionSelection(4, iconRadioCamera) }
             btnJumpingJack.setOnClickListener {
@@ -300,7 +301,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             binding.iconRadioWorkout,
             binding.iconRadioChallenge,
             binding.iconRadioCamera,
-            binding.iconRadioExperience
+            binding.iconRadioExperience,
+            binding.iconLeaderboard,
         )
 
         icons[currentPosition].setImageResource(R.drawable.radio_unchecked)
@@ -411,7 +413,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
-                    permissionHandler = this
+                    permissionHandler = this,
                 ) as GenericWebView?
                 return webView
             }
@@ -425,6 +427,21 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     subOption ?: "",
                     100,
                     null,
+                    customParams = null,
+                    viewModel.isLoading,
+                    ::handleWebViewMessage,
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
+            6 -> {
+                webView = KinesteXSDK.createLeaderboardView(
+                    this,
+                    apiKey,
+                    company,
+                    userId,
+                    "Squats",
+                    "", // optional username
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage,

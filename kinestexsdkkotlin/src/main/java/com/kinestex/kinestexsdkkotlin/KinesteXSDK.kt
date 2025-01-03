@@ -377,7 +377,8 @@ class KinesteXSDK {
             customParams: MutableMap<String, Any>?,
             isLoading: MutableStateFlow<Boolean>,
             onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
+            permissionHandler: PermissionHandler,
+            showLeaderboard: Boolean = true,
         ): WebView? {
             if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
                     userId
@@ -392,6 +393,7 @@ class KinesteXSDK {
                 val data: MutableMap<String, Any> = mutableMapOf(
                     "exercise" to exercise,
                     "countdown" to countdown,
+                    "showLeaderboard" to showLeaderboard,
                     "age" to (user?.age ?: ""),
                     "height" to (user?.height ?: ""),
                     "weight" to (user?.weight ?: ""),
@@ -408,6 +410,59 @@ class KinesteXSDK {
                     companyName = companyName,
                     userId = userId,
                     url = "https://kinestex.vercel.app/challenge",
+                    data = data,
+                    isLoading = isLoading,
+                    onMessageReceived = onMessageReceived,
+                    permissionHandler = permissionHandler
+                )
+            }
+        }
+
+        fun createLeaderboardView(
+            context: Context,
+            apiKey: String,
+            companyName: String,
+            userId: String,
+            exercise: String,
+            username: String = "",
+            customParams: MutableMap<String, Any>?,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
+                    userId
+                ) || containsDisallowedCharacters(exercise)
+            ) {
+                Log.e(
+                    "WebViewManager",
+                    "Validation Error: apiKey, companyName, userId, or exercise contains disallowed characters"
+                )
+                return null
+            } else {
+                val data: MutableMap<String, Any> = mutableMapOf(
+                    "exercise" to exercise,
+                )
+
+                validateCustomParams(customParams, data)
+                var url = "https://kinestex.vercel.app/leaderboard"
+                if (!containsDisallowedCharacters(username)){
+                   if (username.isNotEmpty()){
+                       url += "?username=$username"
+                   }
+                } else {
+                    Log.e(
+                        "WebViewManager",
+                        "Validation Error: username contains disallowed characters"
+                    )
+                }
+
+                return GenericWebView(
+                    context = context,
+                    apiKey = apiKey,
+                    companyName = companyName,
+                    userId = userId,
+                    url = url,
                     data = data,
                     isLoading = isLoading,
                     onMessageReceived = onMessageReceived,
