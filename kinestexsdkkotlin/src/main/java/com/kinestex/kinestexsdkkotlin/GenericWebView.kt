@@ -24,6 +24,7 @@ class GenericWebView(
 
     init {
         setupWebView()
+        setBackgroundColor(android.graphics.Color.BLACK)
     }
     // Store the permission request to handle it after permission result
     private var pendingCameraPermissionRequest: PermissionRequest? = null
@@ -123,6 +124,10 @@ class GenericWebView(
         evaluateJavascript(script) { result ->
             Log.d("WebView", "Script execution result: $result")
         }
+
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            evaluateJavascript(script) {}
+        }, 2000)
     }
 
     fun updateCurrentExercise(exercise: String) {
