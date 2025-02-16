@@ -16,6 +16,7 @@ Whenever a new ranking is available, the leaderboard automatically refreshes to 
       // OPTIONAL: Custom Parameters
       val data = mutableMapOf<String, Any>()
       data["style"] = 'light' // light or dark theme (customizable in admin dashboard)
+      data["isHideHeaderMain"] = true // hide back button in leaderboard
 
     kinesteXWebView = KinesteXSDK.createLeaderboardView(
                     this, // context
