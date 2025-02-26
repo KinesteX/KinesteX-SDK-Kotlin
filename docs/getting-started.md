@@ -16,6 +16,9 @@ Add the following keys for camera usage:
     android:required="false" />
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
+<!-- Optional: To detect device orientation when prompting to position phone correctly-->
+<uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+<uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
 ```
 
 ### 2. Add jitpack and Install KinesteX SDK framework
