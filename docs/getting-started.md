@@ -1,6 +1,6 @@
 ### Minimum Device Requirements:
 
-- iOS: iOS 14.0 or higher
+- Android 9 or higher
 
 ## Configuration
 
