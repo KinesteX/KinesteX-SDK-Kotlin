@@ -3,15 +3,15 @@
 
 ## Plug-and-Play Solutions:
 
-| **Function**                                                 | **Description**                                                       | **Documentation**                                       |
-|--------------------------------------------------------------|-----------------------------------------------------------------------|---------------------------------------------------------|
-| [`createMainView`](./plug-and-play/complete-ux.md)           | Displays 3 workout plans for user to select based on category                                        | [View Documentation](./plug-and-play/complete-ux.md)    |
-| [`createPlanView`](./plug-and-play/workout-plans.md)         | Displays Individual Plan Component                              | [View Documentation](./plug-and-play/workout-plans.md)  |
-| [`createWorkoutView`](./plug-and-play/workouts.md)           | Displays Individual Workout Component                           | [View Documentation](./plug-and-play/workouts.md)       |
-| [`createChallengeView`](./plug-and-play/challenges.md)       | Displays Individual Exercise in a challenge form                | [View Documentation](./plug-and-play/challenges.md)     |
-| [`createLeaderboardView`](./plug-and-play/leaderboard.md)    | Displays Individual Exercise in a challenge form                | [View Documentation](./plug-and-play/leaderboard.md)    |
-| [`createExperiencesView`](./plug-and-play/ai-experiences.md) | Displays AI Experience. Please contact support for more details | [View Documentation](./plug-and-play/ai-experiences.md) |
-
+| **Function**                                                                | **Description**                                                       | **Documentation**                                          |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------------|------------------------------------------------------------|
+| [`createMainView`](./plug-and-play/complete-ux.md)                          | Displays 3 workout plans for user to select based on category                                        | [View Documentation](./plug-and-play/complete-ux.md)       |
+| [`createPlanView`](./plug-and-play/workout-plans.md)                        | Displays Individual Plan Component                              | [View Documentation](./plug-and-play/workout-plans.md)     |
+| [`createWorkoutView`](./plug-and-play/workouts.md)                          | Displays Individual Workout Component                           | [View Documentation](./plug-and-play/workouts.md)          |
+| [`createChallengeView`](./plug-and-play/challenges.md)                      | Displays Individual Exercise in a challenge form                | [View Documentation](./plug-and-play/challenges.md)        |
+| [`createLeaderboardView`](./plug-and-play/leaderboard.md)                   | Displays Individual Exercise in a challenge form                | [View Documentation](./plug-and-play/leaderboard.md)       |
+| [`createExperiencesView`](./plug-and-play/ai-experiences.md)                | Displays AI Experience. Please contact support for more details | [View Documentation](./plug-and-play/ai-experiences.md)    |
+| [`createPersonalizedPlanView (beta)`](./plug-and-play/personalized-plan.md) | Displays Personalized AI Plan depending on user's biometrics and assessment results. Please contact support for more details | [View Documentation](./plug-and-play/personalized-plan.md) |
 
 
 
@@ -39,7 +39,7 @@
 - [Challenges](./plug-and-play/challenges.md)
 - [Leaderboard](./plug-and-play/leaderboard.md)
 - [Gamified AI Experiences](./plug-and-play/ai-experiences.md)
-  
+- [Personalized AI Workout Plan](./plug-and-play/personalized-plan.md)
 ### Custom Solutions: 
 - [Motion Analysis](./custom/motion-analysis-component.md)
 - [Content API](./custom/content-api.md)
