@@ -224,6 +224,68 @@ class KinesteXSDK {
             }
         }
 
+
+        /**
+        Creates a view for a personalied workout plan. Keeps track of the progress for the plan, fitness assessment results, recommending the workouts according to the person's progression
+
+        - Parameters:
+        - apiKey: The API key for authentication.
+        - companyName: The name of the company using the framework provided by KinesteX
+        - userId: The unique identifier for the user.
+        - user: Optional user details including age, height, weight, gender, and lifestyle.
+        - isLoading: A binding to a Boolean value indicating if the view is loading.
+        - onMessageReceived: A closure that handles messages received from the WebView.
+         */
+
+        fun createPersonalizedPlanView(
+            context: Context,
+            apiKey: String,
+            companyName: String,
+            userId: String,
+            user: UserDetails?,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
+                    userId
+                )
+            ) {
+                Log.e(
+                    "WebViewManager",
+                    "⚠️ Validation Error: apiKey, companyName, or userId contains disallowed characters"
+                )
+                return null
+            } else {
+                val url =
+                    "https://kinestex.vercel.app/personalized-plan"
+                val data = mutableMapOf<String, Any>()
+
+                user?.let {
+                    data["age"] = it.age
+                    data["height"] = it.height
+                    data["weight"] = it.weight
+                    data["gender"] = genderString(it.gender)
+                    data["lifestyle"] = lifestyleString(it.lifestyle)
+                }
+
+                validateCustomParams(customParams, data)
+
+                return GenericWebView(
+                    apiKey = apiKey,
+                    companyName = companyName,
+                    userId = userId,
+                    url = url,
+                    data = data,
+                    isLoading = isLoading,
+                    onMessageReceived = onMessageReceived,
+                    context = context,
+                    permissionHandler = permissionHandler
+                )
+            }
+        }
+
         /**
         Creates a view for a specific workout plan. Keeps track of the progress for that particular plan, recommending the workouts according to the person's progression
 
