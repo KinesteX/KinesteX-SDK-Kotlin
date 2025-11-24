@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.models
 
 data class UserDetails(
     val age: Int,

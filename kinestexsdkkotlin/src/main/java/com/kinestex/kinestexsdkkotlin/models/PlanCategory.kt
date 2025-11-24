@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.models
 
 sealed class PlanCategory {
     object Cardio : PlanCategory()

@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.api
 
 import android.net.Uri
 import com.google.gson.Gson

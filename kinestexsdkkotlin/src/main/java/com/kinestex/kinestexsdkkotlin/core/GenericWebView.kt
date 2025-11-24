@@ -1,13 +1,19 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.webkit.*
+import com.kinestex.kinestexsdkkotlin.PermissionHandler
+import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import kotlin.collections.iterator
 
 @SuppressLint("ViewConstructor")
 class GenericWebView(
@@ -24,7 +30,7 @@ class GenericWebView(
 
     init {
         setupWebView()
-        setBackgroundColor(android.graphics.Color.BLACK)
+        setBackgroundColor(Color.BLACK)
     }
     // Store the permission request to handle it after permission result
     private var pendingCameraPermissionRequest: PermissionRequest? = null
@@ -125,7 +131,7 @@ class GenericWebView(
             Log.d("WebView", "Script execution result: $result")
         }
 
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             evaluateJavascript(script) {}
         }, 2000)
     }

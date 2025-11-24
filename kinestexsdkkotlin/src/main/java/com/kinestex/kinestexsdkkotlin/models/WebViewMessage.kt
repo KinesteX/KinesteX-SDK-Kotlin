@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.models
 
 sealed class WebViewMessage {
     data class KinestexLaunched(val data: Map<String, Any>) : WebViewMessage()
@@ -19,4 +19,3 @@ sealed class WebViewMessage {
     data class WorkoutCompleted(val data: Map<String, Any>) : WebViewMessage()
 
 }
-
