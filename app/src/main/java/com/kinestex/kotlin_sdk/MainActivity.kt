@@ -24,7 +24,6 @@ import com.kinestex.kinestexsdkkotlin.api.APIContentResult
 import com.kinestex.kinestexsdkkotlin.api.BodyPart
 import com.kinestex.kinestexsdkkotlin.api.ContentType
 import com.kinestex.kinestexsdkkotlin.core.GenericWebView
-import com.kinestex.kinestexsdkkotlin.api.KinesteXAPI
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
@@ -43,10 +42,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var binding: ActivityMainBinding
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
-
-    private val apiKey = "your_api_key" // store this key securely
-    private val company = "your_company_name"
-    private val userId = "userId"
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -71,6 +66,14 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         initUiListeners()
 
         observe()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Cleanup when no longer needed
+        if (isFinishing) {
+            KinesteXSDK.dispose()
+        }
     }
 
 
@@ -128,7 +131,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
                         val result = withContext(Dispatchers.IO) {
                            // FOR FETCHING PLANS LIST
-                            fetchContent(apiKey, company, contentType = ContentType.PLAN, category = "Cardio", limit = 5)
+                            fetchContent(contentType = ContentType.PLAN, category = "Cardio", limit = 5)
 
                             // FOR FETCHING WORKOUTS LIST (with category and body parts)
                             //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, category = "Fitness", limit = 5)
@@ -166,13 +169,11 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         }
     }
 
-        private suspend fun fetchContent(apiKey: String, companyName: String, contentType: ContentType,
+        private suspend fun fetchContent(contentType: ContentType,
                                          id: String? = null, title: String? = null,
                                          bodyParts: List<BodyPart>? = null, lastDocId: String? = null,
                                          category: String? = null, limit: Int? = null): APIContentResult {
-            return KinesteXAPI.fetchAPIContentData(
-                apiKey = apiKey,
-                companyName = companyName,
+            return KinesteXSDK.api.fetchAPIContentData(
                 contentType = contentType,
                 title = title,
                 id = id,
@@ -261,14 +262,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                         Toast.LENGTH_LONG
                     ).show()
                 }
-                else -> {
-                    // Handle unexpected result type
-                    Toast.makeText(
-                        this,
-                        "Unexpected result type",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
             }
         }
 
@@ -352,9 +345,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
                 webView = KinesteXSDK.createMainView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     getPlanCategory(subOption),
                     null,
                     customParams = data, // example of using custom parameters
@@ -372,9 +362,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
                 webView = KinesteXSDK.createPlanView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "Circuit Training",
                     null,
                     data,
@@ -389,9 +376,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             2 -> {
                 webView = KinesteXSDK.createWorkoutView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "Fitness Lite",
                     null,
                     isLoading = viewModel.isLoading,
@@ -404,9 +388,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             3 -> {
                 webView = KinesteXSDK.createChallengeView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "",
                     100,
                     null,
@@ -421,9 +402,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             5 -> {
                 webView = KinesteXSDK.createExperiencesView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "",
                     100,
                     null,
@@ -437,9 +415,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             6 -> {
                 webView = KinesteXSDK.createLeaderboardView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     "Squats",
                     username = "", // optional username
                     customParams = null,
@@ -560,9 +535,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
         webView = KinesteXSDK.createCameraComponent(
             context = context,
-            apiKey = apiKey,
-            companyName = company,
-            userId = userId,
             currentExercise = "Squats",
             exercises = listOf("Squats", "Jumping Jack"),
             user = null,
@@ -677,30 +649,22 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     }
 
     override fun onBackPressed() {
-
         webView?.let {
-            if (it.canGoBack()) it.goBack()
-            else {
-                if (viewModel.showWebView.value == WebViewState.ERROR) {
-                    super.onBackPressed()
-                } else {
-                    lifecycleScope.launch {
-                        viewModel.showWebView.emit(WebViewState.ERROR)
-                    }
-
+            // Check if WebView has navigation history
+            if (it.canGoBack()) {
+                // Navigate back within WebView
+                it.goBack()
+            } else {
+                // On first page, close the WebView
+                lifecycleScope.launch {
+                    viewModel.showWebView.emit(WebViewState.ERROR)
                 }
             }
             return
         }
-        if (viewModel.showWebView.value == WebViewState.ERROR) {
-            super.onBackPressed()
-        } else {
-            lifecycleScope.launch {
-                viewModel.showWebView.emit(WebViewState.ERROR)
-            }
-        }
 
-
+        // No WebView, close the activity
+        super.onBackPressed()
     }
 
 }

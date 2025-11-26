@@ -3,7 +3,7 @@ package com.kinestex.kinestexsdkkotlin.core
 import android.net.Uri
 
 object UrlHelper {
-    private const val BASE_URL = "https://kinestex.vercel.app"
+    private const val BASE_URL = "https://ai.kinestex.com"
 
     fun mainView(): String = BASE_URL
 
@@ -19,15 +19,20 @@ object UrlHelper {
 
     fun challengeView(): String = "$BASE_URL/challenge"
 
-    fun leaderboardView(username: String): String {
-        val encoded = Uri.encode(username)
-        return "$BASE_URL/leaderboard/$encoded?username=$username"
+    fun leaderboardView(username: String = ""): String {
+        return if (username.isNotEmpty()) {
+            "$BASE_URL/leaderboard?username=$username"
+        } else {
+            "$BASE_URL/leaderboard"
+        }
     }
 
     fun experienceView(experience: String): String {
-        val encoded = Uri.encode(experience)
+        val encoded = Uri.encode(experience.lowercase())
         return "$BASE_URL/experiences/$encoded"
     }
+
+    fun customWorkouts(): String = "$BASE_URL/custom-workout"
 
     fun personalizedPlanView(): String = "$BASE_URL/personalized-plan"
 

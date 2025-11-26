@@ -3,17 +3,12 @@ package com.kinestex.kinestexsdkkotlin.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.webkit.*
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
-import kotlin.collections.iterator
 
 @SuppressLint("ViewConstructor")
 class GenericWebView(
@@ -28,162 +23,126 @@ class GenericWebView(
     private val permissionHandler: PermissionHandler
 ) : WebView(context) {
 
-    init {
-        setupWebView()
-        setBackgroundColor(Color.BLACK)
-    }
-    // Store the permission request to handle it after permission result
-    private var pendingCameraPermissionRequest: PermissionRequest? = null
+    companion object {
+        private val logger = KinesteXLogger.instance
 
+        @SuppressLint("StaticFieldLeak")
+        private val controller = KinesteXWebViewController.getInstance()
+
+        /**
+         * Warms up WebView for faster first load
+         * Pre-initializes WebView instance and loads base URL
+         *
+         * @param context Application context
+         * @param apiKey API key for authentication
+         * @param companyName Company identifier
+         * @param userId User identifier
+         */
+        fun warmup(
+            context: Context,
+            apiKey: String? = null,
+            companyName: String? = null,
+            userId: String? = null
+        ) {
+            controller.warmup(context, apiKey, companyName, userId)
+        }
+
+        /**
+         * Disposes the warmed-up WebView instance
+         * Cleans up resources and releases memory
+         */
+        fun disposeWarmup() {
+            controller.dispose()
+        }
+
+        /**
+         * Check if WebView has been warmed up
+         */
+        val isWarmedUp: Boolean
+            get() = controller.isWarmedUp()
+    }
+
+    init {
+        setupView()
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun setupWebView() {
-        settings.javaScriptEnabled = true
-        settings.mediaPlaybackRequiresUserGesture = false
-        settings.domStorageEnabled = true
+    private fun setupView() {
+        setBackgroundColor(Color.BLACK)
 
+        // Load view using the singleton controller
+        controller.loadView(
+            context = context,
+            apiKey = apiKey,
+            companyName = companyName,
+            userId = userId,
+            url = url,
+            data = data,
+            permissionHandler = permissionHandler,
+            onMessageReceived = onMessageReceived,
+            isLoading = isLoading
+        )
 
-        webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest) {
-                Log.d("KinesteX SDK", "Permission request received: ${request.resources.contentToString()}")
+        // Get the actual WebView from controller and add it as child
+        controller.getWebView()?.let { webView ->
+            // Remove from old parent if exists
+            (webView.parent as? android.view.ViewGroup)?.removeView(webView)
 
-                try {
-                    if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                        // Store the request for later use
-                        pendingCameraPermissionRequest = request
-
-                        if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                            pendingCameraPermissionRequest = request
-                            permissionHandler.requestCameraPermission()
-                        } else {
-                            request.deny()
-                        }
-                    } else {
-                        Log.d("KinesteX SDK", "Denying non-camera permission request")
-                        request.grant(request.resources)
-                    }
-                } catch (e: Exception) {
-                    Log.e("KinesteX SDK", "Error handling permission request", e)
-                    request.grant(request.resources)
-                }
-            }
+            // Add to this container
+            addView(
+                webView, LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.MATCH_PARENT
+                )
+            )
         }
-
-        webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                isLoading.value = false
-                Log.d("KinesteX SDK", "Page finished loading")
-                postMessage()
-            }
-        }
-
-        addJavascriptInterface(JavaScriptInterface(), "messageHandler")
-        loadUrl(url)
     }
 
-    // Method to be called from Activity's onRequestPermissionsResult
+    /**
+     * Method to be called from Activity's onRequestPermissionsResult
+     */
     fun handlePermissionResult(granted: Boolean) {
-            pendingCameraPermissionRequest?.let { request ->
-                try {
-                   if (granted) {
-                        request.grant(request.resources)
-                    } else {
-                        request.deny()
-                    }
-                } catch (e: Exception) {
-                    Log.e("KinesteX SDK", "Error handling permission result", e)
-                    request.deny()
-                } finally {
-                    pendingCameraPermissionRequest = null
-                }
-            }
-
+        controller.handlePermissionResult(granted)
     }
 
-    private fun postMessage() {
-        val message = JSONObject().apply {
-            put("key", apiKey)
-            put("company", companyName)
-            put("userId", userId)
-            put("exercises", JSONArray(data["exercises"] as? List<String> ?: emptyList<String>()))
-            put("currentExercise", data["currentExercise"] as? String ?: "")
-            for ((key, value) in data) {
-                if (key !in listOf("exercises", "currentExercise")) {
-                    put(key, value)
-                }
-            }
-        }
-
-        val script = """
-            (function() {
-                var event = new MessageEvent('message', {
-                    data: $message,
-                    origin: '$url',
-                    source: window
-                });
-                window.dispatchEvent(event);
-            })();
-        """.trimIndent()
-
-
-        evaluateJavascript(script) { result ->
-            Log.d("WebView", "Script execution result: $result")
-        }
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            evaluateJavascript(script) {}
-        }, 2000)
-    }
-
+    /**
+     * Update current exercise
+     */
     fun updateCurrentExercise(exercise: String) {
-        val script = """
-            (function() {
-                var event = new MessageEvent('message', {
-                    data: { currentExercise: '$exercise' },
-                    origin: '$url',
-                    source: window
-                });
-                window.dispatchEvent(event);
-            })();
-        """.trimIndent()
-
-        evaluateJavascript(script) { result ->
-            Log.d("WebView", "Updated current exercise: $result")
-        }
+        controller.updateCurrentExercise(exercise)
     }
 
-    private inner class JavaScriptInterface {
-        @JavascriptInterface
-        fun postMessage(message: String) {
-            try {
-                val json = JSONObject(message)
-                val type = json.optString("type")
-                val dataMap = json.toMap()
+    /**
+     * Send custom action
+     */
+    fun sendAction(action: String, value: String) {
+        controller.sendAction(action, value)
+    }
 
-                val webViewMessage = when (type) {
-                    "kinestex_launched" -> WebViewMessage.KinestexLaunched(dataMap)
-                    "finished_workout" -> WebViewMessage.FinishedWorkout(dataMap)
-                    "error_occurred" -> WebViewMessage.ErrorOccurred(dataMap)
-                    "exercise_completed" -> WebViewMessage.ExerciseCompleted(dataMap)
-                    "exit_kinestex" -> WebViewMessage.ExitKinestex(dataMap)
-                    "workout_opened" -> WebViewMessage.WorkoutOpened(dataMap)
-                    "workout_started" -> WebViewMessage.WorkoutStarted(dataMap)
-                    "plan_unlocked" -> WebViewMessage.PlanUnlocked(dataMap)
-                    "mistake" -> WebViewMessage.Mistake(dataMap)
-                    "successful_repeat" -> WebViewMessage.Reps(dataMap)
-                    "left_camera_frame" -> WebViewMessage.LeftCameraFrame(dataMap)
-                    "returned_camera_frame" -> WebViewMessage.ReturnedCameraFrame(dataMap)
-                    "workout_overview" -> WebViewMessage.WorkoutOverview(dataMap)
-                    "exercise_overview" -> WebViewMessage.ExerciseOverview(dataMap)
-                    "workout_completed" -> WebViewMessage.WorkoutCompleted(dataMap)
-                    else -> WebViewMessage.CustomType(dataMap)
-                }
+    /**
+     * Can go back
+     */
+    override fun canGoBack(): Boolean = controller.canGoBack()
 
-                onMessageReceived(webViewMessage)
-            } catch (e: JSONException) {
-                Log.e("WebView", "Error parsing JSON message: $message", e)
-            }
+    /**
+     * Go back
+     */
+    override fun goBack() {
+        controller.goBack()
+    }
+
+    /**
+     * Cleans up WebView resources
+     * Note: With singleton controller, this doesn't destroy the WebView,
+     * just cleans up references
+     */
+    fun cleanup() {
+        try {
+            logger.info("Cleaning up GenericWebView wrapper...")
+            removeAllViews()
+            logger.success("GenericWebView wrapper cleaned up")
+        } catch (e: Exception) {
+            logger.error("Error cleaning up GenericWebView wrapper", e)
         }
     }
 }

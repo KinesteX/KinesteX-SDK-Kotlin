@@ -4,9 +4,7 @@ import android.util.Log
 
 object KinesteXLogger {
     private const val TAG = "KinesteX"
-
     val instance: KinesteXLogger = this
-
     var isEnabled = true
 
     fun info(message: String) {

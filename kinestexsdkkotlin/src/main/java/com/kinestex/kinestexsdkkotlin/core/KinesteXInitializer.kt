@@ -2,74 +2,69 @@ package com.kinestex.kinestexsdkkotlin.core
 
 import android.content.Context
 
+/**
+ * Internal SDK initializer responsible for lifecycle management
+ *
+ * Handles SDK initialization, WebView warmup, and resource cleanup.
+ * This class is used internally by [KinesteXSDK] and should not be used directly.
+ *
+ * @see KinesteXSDK.initialize
+ */
 class KinesteXInitializer {
-    private var isInitialized = false
     private val logger = KinesteXLogger.instance
+    private var isInitialized = false
 
-    fun initialize(
-        context: Context,
-        apiKey: String,
-        companyName: String,
-        userId: String
-    ) {
+    /**
+     * Initializes the SDK with authentication credentials
+     *
+     * Performs WebView warmup for faster first load and validates that
+     * the SDK hasn't been initialized already.
+     *
+     * @param context Application context for resource access
+     * @param apiKey API key for authentication
+     * @param companyName Company identifier
+     * @param userId Current user identifier
+     */
+    fun initialize(context: Context, apiKey: String, companyName: String, userId: String) {
         if (isInitialized) {
-            logger.info("SDK already initialized")
+            logger.error("KinesteX SDK already initialized")
             return
         }
 
-        logger.info("Initializing SDK...")
+        logger.info("Initializing KinesteX SDK...")
 
-        // Validate credentials
-        require(apiKey.isNotBlank()) { "API key cannot be empty" }
-        require(companyName.isNotBlank()) { "Company name cannot be empty" }
-        require(userId.isNotBlank()) { "User ID cannot be empty" }
-
-        // Validate security
-        require(!containsDisallowedCharacters(apiKey)) {
-            "API key contains disallowed characters"
-        }
-        require(!containsDisallowedCharacters(companyName)) {
-            "Company name contains disallowed characters"
-        }
-        require(!containsDisallowedCharacters(userId)) {
-            "User ID contains disallowed characters"
-        }
-
-        // Warmup WebView for faster first load
-        GenericWebView.warmup(context, apiKey, companyName, userId)
+        // Warmup the WebView controller
+        GenericWebView.warmup(
+            context = context.applicationContext,
+            apiKey = apiKey,
+            companyName = companyName,
+            userId = userId
+        )
 
         isInitialized = true
-        logger.success("SDK initialized successfully")
+        logger.success("KinesteX SDK initialized with WebView warmup")
     }
 
-    private fun containsDisallowedCharacters(input: String): Boolean {
-        val disallowedCharacters = setOf(
-            '<',
-            '>',
-            '{',
-            '}',
-            '(',
-            ')',
-            '[',
-            ']',
-            ';',
-            '"',
-            '\'',
-            '$',
-            '.',
-            '#',
-            '<',
-            '>',
-            '`'
-        )
-        return input.any { it in disallowedCharacters }
-    }
-
-    fun dispose() {
-        GenericWebView.disposeWarmup()
-        isInitialized = false
-        logger.info("SDK disposed")
-    }
-
+    /**
+     * Checks if the SDK has been initialized
+     *
+     * @return true if SDK is initialized, false otherwise
+     */
     fun getIsInitialized(): Boolean = isInitialized
+
+    /**
+     * Disposes SDK resources and resets initialization state
+     *
+     * Cleans up the WebView controller and allows for reinitialization
+     * if needed. Should be called when SDK is no longer needed.
+     */
+    fun dispose() {
+        logger.info("Disposing KinesteX SDK...")
+
+        // Dispose WebView controller
+        GenericWebView.disposeWarmup()
+
+        isInitialized = false
+        logger.success("KinesteX SDK disposed")
+    }
 }

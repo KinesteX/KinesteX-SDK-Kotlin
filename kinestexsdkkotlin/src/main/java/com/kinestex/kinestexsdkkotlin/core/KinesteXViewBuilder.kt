@@ -6,13 +6,43 @@ import android.view.Gravity
 import android.view.View
 import android.widget.TextView
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
+import com.kinestex.kinestexsdkkotlin.models.Gender
+import com.kinestex.kinestexsdkkotlin.models.Lifestyle
+import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.UserDetails
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * Internal view builder for creating KinesteX WebView instances
+ *
+ * Provides centralized view creation with validation, error handling,
+ * and proper data merging. Used internally by [KinesteXSDK] view creation methods.
+ *
+ * @see KinesteXSDK
+ */
 object KinesteXViewBuilder {
     private val logger = KinesteXLogger.instance
 
+    /**
+     * Builds a KinesteX WebView with the specified configuration
+     *
+     * Validates parameters, merges user details and custom parameters,
+     * and creates a [GenericWebView] instance.
+     *
+     * @param context Activity or Fragment context
+     * @param apiKey API key for authentication
+     * @param companyName Company identifier
+     * @param userId User identifier
+     * @param url WebView URL to load
+     * @param data View-specific data map
+     * @param user Optional user details for personalization
+     * @param customParams Optional custom parameters to merge
+     * @param isLoading Loading state flow
+     * @param permissionHandler Handler for permissions
+     * @param onMessageReceived Callback for WebView messages
+     * @return WebView instance or error view if validation fails
+     */
     fun build(
         context: Context,
         apiKey: String,
@@ -36,6 +66,8 @@ object KinesteXViewBuilder {
         val finalData = data.toMutableMap()
         addUserDetails(finalData, user)
         mergeCustomParams(finalData, customParams)
+
+        logger.info("KinesteXViewBuilder: $apiKey - $companyName - $userId")
 
         // Step 3: Create and return WebView
         return GenericWebView(
@@ -70,8 +102,8 @@ object KinesteXViewBuilder {
             data["age"] = it.age
             data["height"] = it.height
             data["weight"] = it.weight
-            data["gender"] = it.gender
-            data["lifestyle"] = it.lifestyle
+            data["gender"] = genderString(it.gender)
+            data["lifestyle"] = lifestyleString(it.lifestyle)
         }
     }
 
@@ -125,5 +157,45 @@ object KinesteXViewBuilder {
             '`'
         )
         return input.any { it in disallowedCharacters }
+    }
+
+    // ============================================================
+    // Helper functions for enum to string conversions
+    // ============================================================
+
+    /**
+     * Converts PlanCategory enum to string representation
+     */
+    fun planCategoryString(category: PlanCategory): String {
+        return when (category) {
+            PlanCategory.Cardio -> "Cardio"
+            PlanCategory.WeightManagement -> "Weight Management"
+            PlanCategory.Strength -> "Strength"
+            PlanCategory.Rehabilitation -> "Rehabilitation"
+            is PlanCategory.Custom -> category.name
+        }
+    }
+
+    /**
+     * Converts Gender enum to string representation
+     */
+    fun genderString(gender: Gender): String {
+        return when (gender) {
+            Gender.MALE -> "Male"
+            Gender.FEMALE -> "Female"
+            Gender.UNKNOWN -> "Male"
+        }
+    }
+
+    /**
+     * Converts Lifestyle enum to string representation
+     */
+    fun lifestyleString(lifestyle: Lifestyle): String {
+        return when (lifestyle) {
+            Lifestyle.SEDENTARY -> "Sedentary"
+            Lifestyle.SLIGHTLY_ACTIVE -> "Slightly Active"
+            Lifestyle.ACTIVE -> "Active"
+            Lifestyle.VERY_ACTIVE -> "Very Active"
+        }
     }
 }
