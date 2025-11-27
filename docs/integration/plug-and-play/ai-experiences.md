@@ -12,9 +12,6 @@
      data["style"] = 'light' // light or dark theme (customizable in admin dashboard)
 
    kinesteXWebView = KinesteXSDK.createExperiencesView(
-                   apiKey,
-                   company,
-                   userId,
                    "box", // name of the experience (please contact support@kinestex.com for more details)
                    100, // duration of the experience
                    userDetails, // userDetails or null

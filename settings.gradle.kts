@@ -16,4 +16,4 @@ pluginManagement {
 
 rootProject.name = "KinesteXSDKKotlin"
 include(":app")
-//include(":kinestexsdkkotlin")
+include(":kinestexsdkkotlin")

@@ -15,9 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -33,8 +30,6 @@ class MainActivity : AppCompatActivity() {
             try {
                 val result = withContext(Dispatchers.IO) {
                     KinesteXAPI.fetchAPIContentData(
-                        apiKey = apiKey,
-                        companyName = company,
                         contentType = ContentType.WORKOUT,
                         category = "Fitness",
                         bodyParts = listOf(BodyPart.ABS),

@@ -18,11 +18,6 @@ class ExperiencesActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var kinesteXWebView: GenericWebView
     private val isLoading = MutableStateFlow(false)
 
-    // Replace with your KinesteX credentials
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-    private val userId = "YOUR USER ID"
-
     // Experience details
     private val experienceName = "box"
     private val experienceDuration = 100 // in seconds
@@ -39,9 +34,6 @@ class ExperiencesActivity : AppCompatActivity(), PermissionHandler {
         // Present the view and initialize it
         kinesteXWebView = KinesteXSDK.createExperiencesView(
             this,
-            apiKey,
-            company,
-            userId,
             experienceName,
             experienceDuration,
             user = null, // UserDetails or null

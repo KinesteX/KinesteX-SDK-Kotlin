@@ -20,9 +20,6 @@ Whenever a new ranking is available, the leaderboard automatically refreshes to 
 
     kinesteXWebView = KinesteXSDK.createLeaderboardView(
                     this, // context
-                    apiKey, // apiKey
-                    company, // company name
-                    userId, // userId
                     "Squats", // name or ID of the exercise
                     username = "", // highlight username in leaderboard if known 
                     data, // custom parameters or null

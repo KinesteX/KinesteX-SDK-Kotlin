@@ -25,9 +25,6 @@ Available Categories to Sort Plans
         // present the view and initialize it
        kinesteXWebView = KinesteXSDK.createMainView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     PlanCategory.Cardio,
                     userDetails, // UserDetails or null
                     customParams = data, // example of using custom parameters. CAN BE NULL

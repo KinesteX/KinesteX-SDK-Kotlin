@@ -17,11 +17,6 @@ class ChallengeActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var kinesteXWebView: GenericWebView
     private val isLoading = MutableStateFlow(false)
 
-    // Replace with your KinesteX credentials
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-    private val userId = "YOUR USER ID"
-
     // Challenge title and duration
     private val challengeExercise = "Squats"
     private val challengeDuration = 30 // in seconds
@@ -38,9 +33,6 @@ class ChallengeActivity : AppCompatActivity(), PermissionHandler {
         // Present the view and initialize it
         kinesteXWebView = KinesteXSDK.createChallengeView(
             this,
-            apiKey,
-            company,
-            userId,
             challengeExercise,
             challengeDuration,
             user = null, // UserDetails or null

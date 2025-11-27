@@ -15,9 +15,6 @@
 
      kinesteXWebView = KinesteXSDK.createPersonalizedPlanView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     userDetails, // userDetails or null
                     data, // custom parameters or null
                     viewModel.isLoading,
