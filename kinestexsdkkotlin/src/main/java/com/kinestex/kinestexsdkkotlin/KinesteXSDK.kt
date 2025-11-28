@@ -18,6 +18,7 @@ import com.kinestex.kinestexsdkkotlin.core.KinesteXCredentials
 import com.kinestex.kinestexsdkkotlin.core.KinesteXInitializer
 import com.kinestex.kinestexsdkkotlin.core.KinesteXLogger
 import com.kinestex.kinestexsdkkotlin.core.KinesteXViewBuilder
+import com.kinestex.kinestexsdkkotlin.core.KinesteXWebViewController
 import com.kinestex.kinestexsdkkotlin.core.UrlHelper
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.UserDetails
@@ -35,7 +36,6 @@ class KinesteXSDK {
         private val credentials = KinesteXCredentials()
         private var apiService: KinesteXAPI? = null
         private val logger = KinesteXLogger.instance
-        private var cameraWebView: GenericWebView? = null
         private const val HOW_TO_VIDEO_LINK =
             "https://cdn.kinestex.com/SDK%2Fhow-to-video%2Fhowtovideo.webm?alt=media&token=9c1254eb-0726-4eed-b16e-4e3945c98b65"
         private var videoPlayer: ExoPlayer? = null
@@ -126,10 +126,6 @@ class KinesteXSDK {
         fun cleanup() {
             try {
                 logger.info("Cleaning up static SDK resources...")
-
-                // Clean up camera WebView
-                cameraWebView?.cleanup()
-                cameraWebView = null
 
                 // Clean up video player
                 videoPlayer?.let { player ->
@@ -521,7 +517,7 @@ class KinesteXSDK {
             )
 
             // Delegate to centralized builder
-            val webView = KinesteXViewBuilder.build(
+            return KinesteXViewBuilder.build(
                 context = context,
                 apiKey = credentials.apiKey,
                 companyName = credentials.companyName,
@@ -534,13 +530,6 @@ class KinesteXSDK {
                 permissionHandler = permissionHandler,
                 onMessageReceived = onMessageReceived
             ) as? WebView
-
-            // Store reference for updateCurrentExercise() method
-            if (webView is GenericWebView) {
-                cameraWebView = webView
-            }
-
-            return webView
         }
 
         /**
@@ -628,10 +617,13 @@ class KinesteXSDK {
         /**
          * Updates the current exercise in the camera component.
          *
+         * Uses the singleton WebView controller to update the exercise dynamically.
+         * This method works because all views share the same WebView instance.
+         *
          * @param exercise The name of the current exercise.
          */
         fun updateCurrentExercise(exercise: String) {
-            cameraWebView?.updateCurrentExercise(exercise)
+            KinesteXWebViewController.getInstance().updateCurrentExercise(exercise)
         }
     }
 }
