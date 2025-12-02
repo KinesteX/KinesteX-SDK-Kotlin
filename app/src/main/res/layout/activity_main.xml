@@ -266,6 +266,32 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/admin_workout_editor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="7dp">
+
+                    <TextView
+                        android:id="@+id/text_admin_workout_editor"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:text="Custom Workout Editor"
+                        android:textColor="@color/white" />
+
+                    <ImageView
+                        android:id="@+id/icon_admin_workout_editor"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/radio_unchecked" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
 

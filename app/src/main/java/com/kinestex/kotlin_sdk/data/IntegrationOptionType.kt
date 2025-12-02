@@ -30,6 +30,9 @@ enum class IntegrationOptionType(
     ),
     CUSTOM_WORKOUT(
         "Custom Workout", "", null
+    ),
+    ADMIN_WORKOUT_EDITOR(
+        "Custom Workout Editor", "", null
     );
 
     companion object {

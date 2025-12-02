@@ -148,6 +148,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             experience.setOnClickListener { handleOptionSelection(5, iconRadioExperience) }
             camera.setOnClickListener { handleOptionSelection(4, iconRadioCamera) }
             customWorkout.setOnClickListener { handleOptionSelection(7, iconCustomWorkout) }
+            adminWorkoutEditor.setOnClickListener { handleOptionSelection(8, iconAdminWorkoutEditor) }
             btnJumpingJack.setOnClickListener {
                 KinesteXSDK.updateCurrentExercise("Jumping Jack")
             }
@@ -193,7 +194,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             binding.iconRadioCamera,
             binding.iconRadioExperience,
             binding.iconLeaderboard,
-            binding.iconCustomWorkout
+            binding.iconCustomWorkout,
+            binding.iconAdminWorkoutEditor
         )
 
         icons[currentPosition].setImageResource(R.drawable.radio_unchecked)
@@ -238,8 +240,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             0 -> {
                 val data = mutableMapOf<String, Any>()
 
-               // data["style"] = "light" // passing forcefully the style theme
-                // data["isHideHeaderMain"] = false // should display header in main screen
+               // data["style"] = "light" // passing forcefully the style theme // data["isHideHeaderMain"] = false // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(
                     this,
@@ -328,6 +329,18 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     customWorkouts = customWorkoutExercises,
                     customParams = null,
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = { message ->
+                        handleWebViewMessage(message = message)
+                    },
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
+            8 -> {
+                webView = KinesteXSDK.createAdminWorkoutEditor(
+                    this,
+                    organization = "KinesteX",
                     isLoading = viewModel.isLoading,
                     onMessageReceived = { message ->
                         handleWebViewMessage(message = message)

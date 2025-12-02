@@ -12,6 +12,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.kinestex.kinestexsdkkotlin.api.ContentType
 import com.kinestex.kinestexsdkkotlin.api.KinesteXAPI
 import com.kinestex.kinestexsdkkotlin.core.GenericWebView
 import com.kinestex.kinestexsdkkotlin.core.KinesteXCredentials
@@ -238,6 +239,19 @@ class KinesteXSDK {
             ) as? WebView
         }
 
+        /**
+         * Creates a custom workout with given exercises
+         *
+         * @param context Activity or Fragment context
+         * @param customWorkouts List of the exercises in custom workout
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
         fun createCustomWorkoutView(
             context: Context,
             customWorkouts: List<WorkoutSequenceExercise>,
@@ -567,6 +581,77 @@ class KinesteXSDK {
                 url = UrlHelper.cameraView(),
                 data = data,
                 user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates an admin workout editor view
+         *
+         * Provides an admin interface for creating and editing workout content.
+         * Requires admin credentials and permissions.
+         *
+         * @param context Activity or Fragment context
+         * @param organization Organization identifier
+         * @param contentType Optional content type to edit (WORKOUT, PLAN, or EXERCISE)
+         * @param contentId Optional content ID to edit specific content
+         * @param customParams Optional custom parameters
+         * @param customQueries Optional custom query parameters for the URL
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createAdminWorkoutEditor(
+            context: Context,
+            organization: String,
+            contentType: ContentType? = null,
+            contentId: String? = null,
+            customParams: MutableMap<String, Any>? = null,
+            customQueries: Map<String, Any?>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            // Validate organization
+            if (containsDisallowedCharacters(organization)) {
+                logger.error("Validation Error: organization contains disallowed characters")
+                return null
+            }
+
+            val credentials = credentials.get()
+
+            // Build the admin view URL
+            val url = UrlHelper.adminView(
+                contentType = contentType,
+                contentId = contentId,
+                customQueries = customQueries
+            )
+
+            // Build view-specific data
+            val data = mapOf(
+                "organization" to organization,
+                "apiKey" to credentials.apiKey,
+                "companyName" to credentials.companyName
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = url,
+                data = data,
+                user = null,
                 customParams = customParams,
                 isLoading = isLoading,
                 permissionHandler = permissionHandler,
