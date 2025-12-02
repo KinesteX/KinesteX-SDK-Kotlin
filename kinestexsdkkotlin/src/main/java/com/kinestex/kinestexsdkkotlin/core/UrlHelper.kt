@@ -27,6 +27,8 @@ object UrlHelper {
         }
     }
 
+    fun customWorkout(): String = "$BASE_URL/custom-workout"
+
     fun experienceView(experience: String): String {
         val encoded = Uri.encode(experience.lowercase())
         return "$BASE_URL/experiences/$encoded"

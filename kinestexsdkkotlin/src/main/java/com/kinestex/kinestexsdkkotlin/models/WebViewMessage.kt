@@ -60,4 +60,10 @@ sealed class WebViewMessage {
     /** Sent when a complete workout session is finished */
     data class WorkoutCompleted(val data: Map<String, Any>) : WebViewMessage()
 
+    /** Sent when a custom workout resources are loaded */
+    data class AllResourcesLoaded(val data: Map<String, Any>) : WebViewMessage()
+
+    /** Sent when a custom workout exit requested */
+    data class WorkoutExitRequest(val data: Map<String, Any>) : WebViewMessage()
+
 }

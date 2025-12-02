@@ -275,6 +275,32 @@ class KinesteXWebViewController private constructor() {
     }
 
     /**
+     * Convert Kotlin value to JSON-compatible value
+     * Properly handles Lists, Maps, and primitive types
+     */
+    private fun toJsonValue(value: Any?): Any {
+        return when (value) {
+            null -> JSONObject.NULL
+            is List<*> -> {
+                JSONArray().apply {
+                    value.forEach { item ->
+                        put(toJsonValue(item))
+                    }
+                }
+            }
+            is Map<*, *> -> {
+                JSONObject().apply {
+                    value.forEach { (k, v) ->
+                        put(k.toString(), toJsonValue(v))
+                    }
+                }
+            }
+            is String, is Number, is Boolean -> value
+            else -> value.toString()
+        }
+    }
+
+    /**
      * Load initial data into the WebView
      */
     private fun loadInitialData() {
@@ -296,7 +322,7 @@ class KinesteXWebViewController private constructor() {
             // Add other data fields
             currentData?.forEach { (key, value) ->
                 if (key !in listOf("exercises", "currentExercise")) {
-                    put(key, value)
+                    put(key, toJsonValue(value))
                 }
             }
         }
@@ -532,8 +558,11 @@ class KinesteXWebViewController private constructor() {
                     "workout_overview" -> WebViewMessage.WorkoutOverview(dataMap)
                     "exercise_overview" -> WebViewMessage.ExerciseOverview(dataMap)
                     "workout_completed" -> WebViewMessage.WorkoutCompleted(dataMap)
+                    "all_resources_loaded" -> WebViewMessage.AllResourcesLoaded(dataMap)
+                    "workout_exit_request" -> WebViewMessage.WorkoutExitRequest(dataMap)
                     else -> WebViewMessage.CustomType(dataMap)
                 }
+
 
                 // Invoke callback (can be called from any thread)
                 onMessageReceived?.invoke(webViewMessage)

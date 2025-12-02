@@ -19,19 +19,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.google.gson.GsonBuilder
-import com.kinestex.kinestexsdkkotlin.api.APIContentResult
-import com.kinestex.kinestexsdkkotlin.api.BodyPart
-import com.kinestex.kinestexsdkkotlin.api.ContentType
 import com.kinestex.kinestexsdkkotlin.core.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
+import com.kinestex.kinestexsdkkotlin.core.KinesteXWebViewController
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
+import com.kinestex.kinestexsdkkotlin.models.WorkoutSequenceExercise
 import com.kinestex.kotlin_sdk.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity(), PermissionHandler {
@@ -42,6 +38,39 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var binding: ActivityMainBinding
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
+
+    val customWorkoutExercises: List<WorkoutSequenceExercise> = listOf(
+        WorkoutSequenceExercise(
+            exerciseId = "jz73VFlUyZ9nyd64OjRb",
+            reps = 15,
+            duration = null,
+            includeRestPeriod = true,
+            restDuration = 20
+        ),
+        WorkoutSequenceExercise(
+            exerciseId = "ZVMeLsaXQ9Tzr5JYXg29",
+            reps = 10,
+            duration = 30,
+            includeRestPeriod = true,
+            restDuration = 15
+        ),
+        // duplicate of the exercise above to create a set
+        WorkoutSequenceExercise(
+            exerciseId = "ZVMeLsaXQ9Tzr5JYXg29",
+            reps = 10,
+            duration = 30,
+            includeRestPeriod = true,
+            restDuration = 15
+        ),
+        WorkoutSequenceExercise(
+            exerciseId = "gJGOiZhCvJrhEP7sTy78",
+            reps = 20,
+            duration = null,
+            includeRestPeriod = false,
+            restDuration = 0
+        )
+    )
+
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -115,6 +144,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             leaderboard.setOnClickListener { handleOptionSelection(6, iconLeaderboard) }
             experience.setOnClickListener { handleOptionSelection(5, iconRadioExperience) }
             camera.setOnClickListener { handleOptionSelection(4, iconRadioCamera) }
+            customWorkout.setOnClickListener { handleOptionSelection(7, iconCustomWorkout) }
             btnJumpingJack.setOnClickListener {
                 KinesteXSDK.updateCurrentExercise("Jumping Jack")
             }
@@ -296,6 +326,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             binding.iconRadioCamera,
             binding.iconRadioExperience,
             binding.iconLeaderboard,
+            binding.iconCustomWorkout
         )
 
         icons[currentPosition].setImageResource(R.drawable.radio_unchecked)
@@ -424,8 +455,20 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 ) as GenericWebView?
                 return webView
             }
-
             4 -> createCameraComponentView(this)
+            7 -> {
+                webView = KinesteXSDK.createCustomWorkoutView(
+                    this,
+                    customWorkouts = customWorkoutExercises,
+                    customParams = null,
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = { message ->
+                        handleWebViewMessage(message = message)
+                    },
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
             else -> null
         }
         return view?.let { setLayoutParamsFullScreen(it) }
@@ -566,6 +609,16 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                         it
                     )
                 }
+            }
+            is WebViewMessage.AllResourcesLoaded -> {
+                Log.i("ACTION", "ALL RESOURCES LOADED")
+                KinesteXWebViewController.getInstance().sendAction("workout_activity_action", "start")
+            }
+
+            is WebViewMessage.WorkoutExitRequest -> lifecycleScope.launch {
+                viewModel.showWebView.emit(
+                    WebViewState.ERROR
+                )
             }
 
             else -> {

@@ -27,6 +27,9 @@ enum class IntegrationOptionType(
     ),
     LEADERBOARD(
         "Leaderboard", "", null
+    ),
+    CUSTOM_WORKOUT(
+        "Custom Workout", "", null
     );
 
     companion object {

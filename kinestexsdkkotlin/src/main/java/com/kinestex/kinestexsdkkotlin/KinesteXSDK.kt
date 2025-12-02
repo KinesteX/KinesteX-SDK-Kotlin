@@ -23,6 +23,7 @@ import com.kinestex.kinestexsdkkotlin.core.UrlHelper
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.UserDetails
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
+import com.kinestex.kinestexsdkkotlin.models.WorkoutSequenceExercise
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
@@ -236,6 +237,47 @@ class KinesteXSDK {
                 onMessageReceived = onMessageReceived
             ) as? WebView
         }
+
+        fun createCustomWorkoutView(
+            context: Context,
+            customWorkouts: List<WorkoutSequenceExercise>,
+            user: UserDetails? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            customParams: Map<String, Any>? = null,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler,
+        ): WebView? {
+
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            val normalized = normalizeWorkoutExercises(customWorkouts)
+            if (normalized == null) {
+                logger.error("Validation Error: No valid exercises provided for custom workout")
+                return null
+            }
+
+            return KinesteXViewBuilder.build(
+                    context = context,
+                    apiKey = credentials.apiKey,
+                    companyName = credentials.companyName,
+                    userId = credentials.userId,
+                    url = UrlHelper.customWorkout(),
+                    data = mapOf(
+                        "customWorkoutExercises" to normalized
+                    ),
+                    user = user,
+                    customParams = customParams,
+                    isLoading = isLoading,
+                    permissionHandler = permissionHandler,
+                    onMessageReceived = onMessageReceived
+            ) as WebView?
+
+        }
+
 
         /**
          * Creates a plan view for a specific workout plan
@@ -624,6 +666,70 @@ class KinesteXSDK {
          */
         fun updateCurrentExercise(exercise: String) {
             KinesteXWebViewController.getInstance().updateCurrentExercise(exercise)
+        }
+
+        fun normalizeWorkoutExercises(
+            exercises: List<WorkoutSequenceExercise>?
+        ): List<Map<String, Any?>>? {
+
+            if (exercises == null || exercises.isEmpty()) {
+                return null
+            }
+
+            val normalizedExercises = mutableListOf<Map<String, Any?>>()
+
+            for (exercise in exercises) {
+
+                // Validate exerciseId
+                if (exercise.exerciseId.isEmpty() ||
+                    containsDisallowedCharacters(exercise.exerciseId)
+                ) {
+                    continue
+                }
+
+                // Validate numeric values
+                if ((exercise.reps != null && exercise.reps < 0) ||
+                    (exercise.duration != null && exercise.duration < 0) ||
+                    exercise.restDuration < 0
+                ) {
+                    continue
+                }
+
+                normalizedExercises.add(
+                    mapOf(
+                        "exerciseId" to exercise.exerciseId,
+                        "reps" to exercise.reps,
+                        "duration" to exercise.duration,
+                        "includeRestPeriod" to exercise.includeRestPeriod,
+                        "restDuration" to exercise.restDuration
+                    )
+                )
+            }
+
+            return if (normalizedExercises.isEmpty()) null else normalizedExercises
+        }
+
+        private fun containsDisallowedCharacters(input: String): Boolean {
+            val disallowedCharacters = setOf(
+                '<',
+                '>',
+                '{',
+                '}',
+                '(',
+                ')',
+                '[',
+                ']',
+                ';',
+                '"',
+                '\'',
+                '$',
+                '.',
+                '#',
+                '<',
+                '>',
+                '`'
+            )
+            return input.any { it in disallowedCharacters }
         }
     }
 }
