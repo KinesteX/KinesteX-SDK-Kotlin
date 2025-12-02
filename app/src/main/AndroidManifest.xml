@@ -39,6 +39,18 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ContentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ContentListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ContentDetailActivity"
+            android:exported="false" />
+
     </application>
 
 

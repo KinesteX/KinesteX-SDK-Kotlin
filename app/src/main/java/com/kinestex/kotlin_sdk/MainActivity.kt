@@ -3,8 +3,11 @@ package com.kinestex.kotlin_sdk
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -153,147 +156,11 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 showHowToVideo()
             }
             btnApiRequest.setOnClickListener {
-                lifecycleScope.launch {
-                    try {
-                        // Show loading state if needed
-                        // binding.progressBar.visibility = View.VISIBLE
-                        // Switch to IO dispatcher for network request
-
-                        val result = withContext(Dispatchers.IO) {
-                           // FOR FETCHING PLANS LIST
-                            fetchContent(contentType = ContentType.PLAN, category = "Cardio", limit = 5)
-
-                            // FOR FETCHING WORKOUTS LIST (with category and body parts)
-                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, category = "Fitness", limit = 5)
-                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, bodyParts = listOf(BodyPart.ABS), limit = 5)
-
-                            // FOR FETCHING EXERCISES LIST (with body parts)
-                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, bodyParts = listOf(BodyPart.ABS), limit = 5)
-
-                            // FOR FETCHING PLAN
-                            // fetchContent(apiKey, company, contentType = ContentType.PLAN, title = "Circuit Training")
-
-                            // FOR FETCHING WORKOUT
-                            // fetchContent(apiKey, company, contentType = ContentType.WORKOUT, title = "Fitness Lite")
-
-                            // FOR FETCHING EXERCISE
-                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, title = "Squats")
-                        }
-
-                        // Handle the result on the main thread
-                        handleAPIResult(result)
-                    } catch (e: Exception) {
-                        // Handle any errors
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Error: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } finally {
-                        // Hide loading state if needed
-                        // binding.progressBar.visibility = View.GONE
-                    }
-                }
+                startActivity(Intent(this@MainActivity, ContentActivity::class.java))
             }
 
         }
     }
-
-        private suspend fun fetchContent(contentType: ContentType,
-                                         id: String? = null, title: String? = null,
-                                         bodyParts: List<BodyPart>? = null, lastDocId: String? = null,
-                                         category: String? = null, limit: Int? = null): APIContentResult {
-            return KinesteXSDK.api.fetchAPIContentData(
-                contentType = contentType,
-                title = title,
-                id = id,
-                bodyParts = bodyParts,
-                lastDocId = lastDocId,
-                category = category,
-                limit = limit
-            )
-        }
-
-        private fun handleAPIResult(result: APIContentResult) {
-            when (result) {
-                is APIContentResult.Workout -> {
-                    // Handle successful workout data
-                    val workout = result.workout
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Workout Data:\n$prettyJson")
-                }
-                is APIContentResult.Plan -> {
-                    // Handle successful workout data
-                    val workout = result.plan
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Plan Data:\n$prettyJson")
-                }
-                is APIContentResult.Exercise -> {
-                    // Handle successful workout data
-                    val workout = result.exercise
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Exercise Data:\n$prettyJson")
-                }
-                is APIContentResult.Workouts -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.workouts)
-
-                    // Print the formatted JSON string
-                    println("Workouts Data:\n$prettyJson")
-                }
-                is APIContentResult.Plans -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.plans)
-
-                    // Print the formatted JSON string
-                    println("Plans Data:\n$prettyJson")
-                }
-
-                is APIContentResult.Exercises -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.exercises)
-
-                    // Print the formatted JSON string
-                    println("Exercises Data:\n$prettyJson")
-                }
-                is APIContentResult.Error -> {
-                    println("ERROR: ${result.message}")
-                    // Handle error
-                    Toast.makeText(
-                        this,
-                        "Error: ${result.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
 
     private fun handleNextButton() {
         createWebView()?.let { view ->
@@ -664,7 +531,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             dpToPx(context, 10), dpToPx(context, 7), dpToPx(context, 10), dpToPx(context, 7)
         )
 
-        // Create TextView
         val textView = TextView(context)
         val textParams = LinearLayout.LayoutParams(
             0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f
@@ -673,7 +539,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         textView.text = title
         textView.setTextColor(Color.WHITE)
 
-        // Create ImageView
         val imageView = ImageView(context)
 
         val imageParams = LinearLayout.LayoutParams(
@@ -683,7 +548,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         imageView.layoutParams = imageParams
         imageView.setImageResource(if (index == 0) R.drawable.radio_active else R.drawable.radio_unchecked)
 
-        // Add views to LinearLayout
         iconSubOptions.add(imageView)
 
         linearLayout.addView(textView)
@@ -703,20 +567,15 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
     override fun onBackPressed() {
         webView?.let {
-            // Check if WebView has navigation history
             if (it.canGoBack()) {
-                // Navigate back within WebView
                 it.goBack()
             } else {
-                // On first page, close the WebView
                 lifecycleScope.launch {
                     viewModel.showWebView.emit(WebViewState.ERROR)
                 }
             }
             return
         }
-
-        // No WebView, close the activity
         super.onBackPressed()
     }
 
