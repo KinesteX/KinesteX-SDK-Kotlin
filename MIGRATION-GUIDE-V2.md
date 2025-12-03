@@ -129,7 +129,7 @@ val view = KinesteXSDK.createMainView(
 ```
 
 **Benefits:**
-- ✅ 3 fewer parameters (27% reduction)
+- ✅ 3 fewer parameters
 - ✅ No credential repetition
 - ✅ Cleaner, more readable code
 - ✅ Type-safe error handling
