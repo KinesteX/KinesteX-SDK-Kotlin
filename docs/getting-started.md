@@ -36,13 +36,44 @@ dependencyResolutionManagement {
 }
 ```
 
-Add the KinesteX SDK dependency in your app’s `build.gradle`:
+Add the KinesteX SDK dependency in your app's `build.gradle`:
 
 ```gradle
-implementation("com.github.KinesteX:KinesteXSDKKotlin:1.2.0")
+implementation("com.github.KinesteX:KinesteXSDKKotlin:2.0.0")
 ```
 
-### 3. Request camera permission from app level:
+### 3. Initialize the SDK (v2.0 - Recommended)
+
+Initialize the SDK once in your `Application` class:
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        // Initialize KinesteX SDK once at app start
+        KinesteXSDK.initialize(
+            context = this,
+            apiKey = "your-api-key",        // can be generated in admin dashboard
+            companyName = "your-company",   // can be found in admin dashboard
+            userId = "unique-user-id"       // must be unique for each user
+        )
+    }
+}
+```
+
+Register your custom Application class in `AndroidManifest.xml`:
+
+```xml
+<application
+    android:name=".MyApplication"
+    ...>
+</application>
+```
+
+**Note:** This initialization is required for v2.0 APIs. If you're still using v1.x code patterns, initialization is optional but recommended for better performance (WebView warmup).
+
+### 4. Request camera permission from app level:
 
 Before a user starts a workout, we need to get access to camera **(if your app doesn't have access to camera already)**.
 We are requesting camera permission on the app level and need to handle the result in the app level as well.
@@ -55,10 +86,13 @@ We are requesting camera permission on the app level and need to handle the resu
 ```kotlin
    // initialize the webview
    private var kinesteXWebView: GenericWebView? = null
-   private var apiKey = yourApiKey // can be generated in admin dashboard
-   private var companyName = yourCompanyName // also can be found in admin dashboard
-   private var userId = yourUserId // can be any String, must be unique for each user
-   
+
+   // v2.0: No need to declare apiKey, companyName, userId here if you initialized the SDK
+   // v1.x (legacy): Uncomment below if not using SDK initialization
+   // private var apiKey = yourApiKey
+   // private var companyName = yourCompanyName
+   // private var userId = yourUserId
+
    // OPTIONAL: 
   // If available, you can pass user details to automatically adjust some exercises and correctly estimate calories based on the user's information.
   // Note: User details are only used on the device for customization purposes during the session. If you want to persist the customization across sessions, you'll need to pass the customization data everytime when launching KinesteX.
@@ -78,7 +112,7 @@ We are requesting camera permission on the app level and need to handle the resu
    }
 ```
 
-### 4. Handle data through callback function
+### 5. Handle data through callback function
 
 The SDK sends various messages. Implement a callback to handle these messages:
 

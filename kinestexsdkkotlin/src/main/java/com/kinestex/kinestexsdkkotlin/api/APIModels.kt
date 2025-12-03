@@ -1,4 +1,4 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.api
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException

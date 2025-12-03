@@ -3,8 +3,11 @@ package com.kinestex.kotlin_sdk
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -19,20 +22,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.google.gson.GsonBuilder
-import com.kinestex.kinestexsdkkotlin.APIContentResult
-import com.kinestex.kinestexsdkkotlin.BodyPart
-import com.kinestex.kinestexsdkkotlin.ContentType
-import com.kinestex.kinestexsdkkotlin.GenericWebView
-import com.kinestex.kinestexsdkkotlin.KinesteXAPI
+import com.kinestex.kinestexsdkkotlin.core.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
-import com.kinestex.kinestexsdkkotlin.PlanCategory
-import com.kinestex.kinestexsdkkotlin.WebViewMessage
+import com.kinestex.kinestexsdkkotlin.core.KinesteXWebViewController
+import com.kinestex.kinestexsdkkotlin.models.PlanCategory
+import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
+import com.kinestex.kinestexsdkkotlin.models.WorkoutSequenceExercise
 import com.kinestex.kotlin_sdk.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity(), PermissionHandler {
@@ -44,9 +42,38 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private val iconSubOptions = mutableListOf<ImageView>()
     private var webView: GenericWebView? = null
 
-    private val apiKey = "your_api_key" // store this key securely
-    private val company = "your_company_name"
-    private val userId = "userId"
+    val customWorkoutExercises: List<WorkoutSequenceExercise> = listOf(
+        WorkoutSequenceExercise(
+            exerciseId = "jz73VFlUyZ9nyd64OjRb",
+            reps = 15,
+            duration = null,
+            includeRestPeriod = true,
+            restDuration = 20
+        ),
+        WorkoutSequenceExercise(
+            exerciseId = "ZVMeLsaXQ9Tzr5JYXg29",
+            reps = 10,
+            duration = 30,
+            includeRestPeriod = true,
+            restDuration = 15
+        ),
+        // duplicate of the exercise above to create a set
+        WorkoutSequenceExercise(
+            exerciseId = "ZVMeLsaXQ9Tzr5JYXg29",
+            reps = 10,
+            duration = 30,
+            includeRestPeriod = true,
+            restDuration = 15
+        ),
+        WorkoutSequenceExercise(
+            exerciseId = "gJGOiZhCvJrhEP7sTy78",
+            reps = 20,
+            duration = null,
+            includeRestPeriod = false,
+            restDuration = 0
+        )
+    )
+
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -71,6 +98,14 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         initUiListeners()
 
         observe()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Cleanup when no longer needed
+        if (isFinishing) {
+            KinesteXSDK.dispose()
+        }
     }
 
 
@@ -112,6 +147,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             leaderboard.setOnClickListener { handleOptionSelection(6, iconLeaderboard) }
             experience.setOnClickListener { handleOptionSelection(5, iconRadioExperience) }
             camera.setOnClickListener { handleOptionSelection(4, iconRadioCamera) }
+            customWorkout.setOnClickListener { handleOptionSelection(7, iconCustomWorkout) }
+            adminWorkoutEditor.setOnClickListener { handleOptionSelection(8, iconAdminWorkoutEditor) }
             btnJumpingJack.setOnClickListener {
                 KinesteXSDK.updateCurrentExercise("Jumping Jack")
             }
@@ -120,157 +157,11 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 showHowToVideo()
             }
             btnApiRequest.setOnClickListener {
-                lifecycleScope.launch {
-                    try {
-                        // Show loading state if needed
-                        // binding.progressBar.visibility = View.VISIBLE
-                        // Switch to IO dispatcher for network request
-
-                        val result = withContext(Dispatchers.IO) {
-                           // FOR FETCHING PLANS LIST
-                            fetchContent(apiKey, company, contentType = ContentType.PLAN, category = "Cardio", limit = 5)
-
-                            // FOR FETCHING WORKOUTS LIST (with category and body parts)
-                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, category = "Fitness", limit = 5)
-                            //fetchContent(apiKey, company, contentType = ContentType.WORKOUT, bodyParts = listOf(BodyPart.ABS), limit = 5)
-
-                            // FOR FETCHING EXERCISES LIST (with body parts)
-                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, bodyParts = listOf(BodyPart.ABS), limit = 5)
-
-                            // FOR FETCHING PLAN
-                            // fetchContent(apiKey, company, contentType = ContentType.PLAN, title = "Circuit Training")
-
-                            // FOR FETCHING WORKOUT
-                            // fetchContent(apiKey, company, contentType = ContentType.WORKOUT, title = "Fitness Lite")
-
-                            // FOR FETCHING EXERCISE
-                            // fetchContent(apiKey, company, contentType = ContentType.EXERCISE, title = "Squats")
-                        }
-
-                        // Handle the result on the main thread
-                        handleAPIResult(result)
-                    } catch (e: Exception) {
-                        // Handle any errors
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Error: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } finally {
-                        // Hide loading state if needed
-                        // binding.progressBar.visibility = View.GONE
-                    }
-                }
+                startActivity(Intent(this@MainActivity, ContentActivity::class.java))
             }
 
         }
     }
-
-        private suspend fun fetchContent(apiKey: String, companyName: String, contentType: ContentType,
-                                         id: String? = null, title: String? = null,
-                                         bodyParts: List<BodyPart>? = null, lastDocId: String? = null,
-                                         category: String? = null, limit: Int? = null): APIContentResult {
-            return KinesteXAPI.fetchAPIContentData(
-                apiKey = apiKey,
-                companyName = companyName,
-                contentType = contentType,
-                title = title,
-                id = id,
-                bodyParts = bodyParts,
-                lastDocId = lastDocId,
-                category = category,
-                limit = limit
-            )
-        }
-
-        private fun handleAPIResult(result: APIContentResult) {
-            when (result) {
-                is APIContentResult.Workout -> {
-                    // Handle successful workout data
-                    val workout = result.workout
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Workout Data:\n$prettyJson")
-                }
-                is APIContentResult.Plan -> {
-                    // Handle successful workout data
-                    val workout = result.plan
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Plan Data:\n$prettyJson")
-                }
-                is APIContentResult.Exercise -> {
-                    // Handle successful workout data
-                    val workout = result.exercise
-                    // Create a Gson instance with pretty printing
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(workout)
-
-                    // Print the formatted JSON string
-                    println("Exercise Data:\n$prettyJson")
-                }
-                is APIContentResult.Workouts -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.workouts)
-
-                    // Print the formatted JSON string
-                    println("Workouts Data:\n$prettyJson")
-                }
-                is APIContentResult.Plans -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.plans)
-
-                    // Print the formatted JSON string
-                    println("Plans Data:\n$prettyJson")
-                }
-
-                is APIContentResult.Exercises -> {
-
-                    val gson = GsonBuilder().setPrettyPrinting().create()
-
-                    // Convert the workout object to a pretty JSON string
-                    val prettyJson = gson.toJson(result.exercises)
-
-                    // Print the formatted JSON string
-                    println("Exercises Data:\n$prettyJson")
-                }
-                is APIContentResult.Error -> {
-                    println("ERROR: ${result.message}")
-                    // Handle error
-                    Toast.makeText(
-                        this,
-                        "Error: ${result.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                else -> {
-                    // Handle unexpected result type
-                    Toast.makeText(
-                        this,
-                        "Unexpected result type",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
 
     private fun handleNextButton() {
         createWebView()?.let { view ->
@@ -303,6 +194,8 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             binding.iconRadioCamera,
             binding.iconRadioExperience,
             binding.iconLeaderboard,
+            binding.iconCustomWorkout,
+            binding.iconAdminWorkoutEditor
         )
 
         icons[currentPosition].setImageResource(R.drawable.radio_unchecked)
@@ -347,14 +240,10 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             0 -> {
                 val data = mutableMapOf<String, Any>()
 
-               // data["style"] = "light" // passing forcefully the style theme
-                // data["isHideHeaderMain"] = false // should display header in main screen
+               // data["style"] = "light" // passing forcefully the style theme // data["isHideHeaderMain"] = false // should display header in main screen
 
                 webView = KinesteXSDK.createMainView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     getPlanCategory(subOption),
                     null,
                     customParams = data, // example of using custom parameters
@@ -372,9 +261,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
                 webView = KinesteXSDK.createPlanView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "Circuit Training",
                     null,
                     data,
@@ -389,9 +275,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             2 -> {
                 webView = KinesteXSDK.createWorkoutView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "Fitness Lite",
                     null,
                     isLoading = viewModel.isLoading,
@@ -404,9 +287,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             3 -> {
                 webView = KinesteXSDK.createChallengeView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     subOption ?: "",
                     100,
                     null,
@@ -419,15 +299,15 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             }
 
             5 -> {
+                val data = mutableMapOf<String, Any>()
+
+                 data["exercise"] = "balloonpop" // passing forcefully the style theme // data["isHideHeaderMain"] = false // should display header in main screen
+
                 webView = KinesteXSDK.createExperiencesView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
-                    subOption ?: "",
-                    100,
+                    "assessment",
                     null,
-                    customParams = null,
+                    customParams = data,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
                     permissionHandler = this
@@ -437,9 +317,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             6 -> {
                 webView = KinesteXSDK.createLeaderboardView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     "Squats",
                     username = "", // optional username
                     customParams = null,
@@ -449,8 +326,32 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 ) as GenericWebView?
                 return webView
             }
-
             4 -> createCameraComponentView(this)
+            7 -> {
+                webView = KinesteXSDK.createCustomWorkoutView(
+                    this,
+                    customWorkouts = customWorkoutExercises,
+                    customParams = null,
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = { message ->
+                        handleWebViewMessage(message = message)
+                    },
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
+            8 -> {
+                webView = KinesteXSDK.createAdminWorkoutEditor(
+                    this,
+                    organization = "KinesteX",
+                    isLoading = viewModel.isLoading,
+                    onMessageReceived = { message ->
+                        handleWebViewMessage(message = message)
+                    },
+                    permissionHandler = this
+                ) as GenericWebView?
+                return webView
+            }
             else -> null
         }
         return view?.let { setLayoutParamsFullScreen(it) }
@@ -560,9 +461,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
         webView = KinesteXSDK.createCameraComponent(
             context = context,
-            apiKey = apiKey,
-            companyName = company,
-            userId = userId,
             currentExercise = "Squats",
             exercises = listOf("Squats", "Jumping Jack"),
             user = null,
@@ -594,6 +492,16 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                         it
                     )
                 }
+            }
+            is WebViewMessage.AllResourcesLoaded -> {
+                Log.i("ACTION", "ALL RESOURCES LOADED")
+                KinesteXWebViewController.getInstance().sendAction("workout_activity_action", "start")
+            }
+
+            is WebViewMessage.WorkoutExitRequest -> lifecycleScope.launch {
+                viewModel.showWebView.emit(
+                    WebViewState.ERROR
+                )
             }
 
             else -> {
@@ -639,7 +547,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             dpToPx(context, 10), dpToPx(context, 7), dpToPx(context, 10), dpToPx(context, 7)
         )
 
-        // Create TextView
         val textView = TextView(context)
         val textParams = LinearLayout.LayoutParams(
             0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f
@@ -648,7 +555,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         textView.text = title
         textView.setTextColor(Color.WHITE)
 
-        // Create ImageView
         val imageView = ImageView(context)
 
         val imageParams = LinearLayout.LayoutParams(
@@ -658,7 +564,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         imageView.layoutParams = imageParams
         imageView.setImageResource(if (index == 0) R.drawable.radio_active else R.drawable.radio_unchecked)
 
-        // Add views to LinearLayout
         iconSubOptions.add(imageView)
 
         linearLayout.addView(textView)
@@ -677,30 +582,17 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     }
 
     override fun onBackPressed() {
-
         webView?.let {
-            if (it.canGoBack()) it.goBack()
-            else {
-                if (viewModel.showWebView.value == WebViewState.ERROR) {
-                    super.onBackPressed()
-                } else {
-                    lifecycleScope.launch {
-                        viewModel.showWebView.emit(WebViewState.ERROR)
-                    }
-
+            if (it.canGoBack()) {
+                it.goBack()
+            } else {
+                lifecycleScope.launch {
+                    viewModel.showWebView.emit(WebViewState.ERROR)
                 }
             }
             return
         }
-        if (viewModel.showWebView.value == WebViewState.ERROR) {
-            super.onBackPressed()
-        } else {
-            lifecycleScope.launch {
-                viewModel.showWebView.emit(WebViewState.ERROR)
-            }
-        }
-
-
+        super.onBackPressed()
     }
 
 }

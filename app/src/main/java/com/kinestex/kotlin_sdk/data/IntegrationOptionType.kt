@@ -23,10 +23,16 @@ enum class IntegrationOptionType(
         "Camera", "", null
     ),
     EXPERIENCE(
-        "Experience", "Experience", listOf("Box")
+        "Experience", "Experience", listOf("Balloon Pop Game")
     ),
     LEADERBOARD(
         "Leaderboard", "", null
+    ),
+    CUSTOM_WORKOUT(
+        "Custom Workout", "", null
+    ),
+    ADMIN_WORKOUT_EDITOR(
+        "Custom Workout Editor", "", null
     );
 
     companion object {

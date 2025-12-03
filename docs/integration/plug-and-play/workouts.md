@@ -16,9 +16,6 @@ You can find workout in our library [here](https://workout-view.kinestex.com/?ta
 
  kinesteXWebView = KinesteXSDK.createWorkoutView(
                  this,
-                 apiKey,
-                 company,
-                 userId,
                  "Fitness Lite", // title or ID of the workout
                  userDetails, // userDetails or null
                  data, // custom parameters or null

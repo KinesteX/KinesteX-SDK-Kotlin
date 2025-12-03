@@ -12,9 +12,6 @@
  ```kotlin
    kinesteXWebView = KinesteXSDK.createCameraComponent(
             context = context,
-            apiKey = apiKey,
-            companyName = company,
-            userId = userId,
             currentExercise = "Squats", // current exercise name
             exercises = listOf("Squats", "Lunges"), // exercises that user is expected to do
             user = userDetails, // user details or null

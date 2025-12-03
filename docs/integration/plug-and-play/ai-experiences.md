@@ -7,16 +7,10 @@
 # **EXPERIENCE Integration Example**
 
 ```kotlin
-     // OPTIONAL: Custom Parameters
      val data = mutableMapOf<String, Any>()
-     data["style"] = 'light' // light or dark theme (customizable in admin dashboard)
-
+     data["exercise"] = 'balloonpop' // specify the experience
    kinesteXWebView = KinesteXSDK.createExperiencesView(
-                   apiKey,
-                   company,
-                   userId,
-                   "box", // name of the experience (please contact support@kinestex.com for more details)
-                   100, // duration of the experience
+                   "assessment", // name of the experience (please contact support@kinestex.com for more details)
                    userDetails, // userDetails or null
                    data, // custom parameters or null
                    viewModel.isLoading,

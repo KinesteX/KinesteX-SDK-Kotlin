@@ -19,11 +19,6 @@ class CameraActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var kinesteXWebView: GenericWebView
     private val isLoading = MutableStateFlow(false)
 
-    // Replace with your KinesteX credentials
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-    private val userId = "YOUR USER ID"
-
     // UI elements
     private lateinit var tvReps: TextView
     private lateinit var tvMistake: TextView
@@ -40,9 +35,6 @@ class CameraActivity : AppCompatActivity(), PermissionHandler {
         // Create the camera component view
         kinesteXWebView = KinesteXSDK.createCameraComponent(
             context = this,
-            apiKey = apiKey,
-            companyName = company,
-            userId = userId,
             currentExercise = "Squats",
             exercises = listOf("Squats", "Jumping Jack"),
             user = null,

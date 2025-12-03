@@ -15,7 +15,9 @@
 <!--    Optional: To detect device orientation when prompting to position phone correctly-->
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+
     <application
+        android:name=".app.KinesteXApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -36,6 +38,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ContentActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ContentListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ContentDetailActivity"
+            android:exported="false" />
 
     </application>
 

@@ -10,8 +10,7 @@ The KinesteX Content API allows you to fetch workout plans, workouts, and exerci
 
 ### Prerequisites
 
-- **API Key**: You must have a valid API key provided by KinesteX.
-- **Company Name**: Your company's name as registered with KinesteX.
+- **Initialization required**: Before usage of fetching content api need to initialize the sdk
 - **Dependencies**: Ensure you have Kotlin Coroutines in your project and the latest version of KinesteXSDK. Check the latest version [here](https://jitpack.io/#KinesteX/KinesteX-SDK-Kotlin).
 
 ### Fetching Content
@@ -36,18 +35,14 @@ btnApiRequest.setOnClickListener {
             // Switch to IO dispatcher for network request
             val result = withContext(Dispatchers.IO) {
                 // FOR FETCHING PLANS LIST
-                fetchContent(
-                    apiKey = apiKey,
-                    companyName = company,
+                KinesteXAPI.api.fetchAPIContentData(
                     contentType = ContentType.PLAN,
                     category = "Cardio",
                     limit = 5
                 )
 
                 // FOR FETCHING WORKOUTS LIST (with category and body parts)
-                // fetchContent(
-                //     apiKey = apiKey,
-                //     companyName = company,
+                // KinesteXAPI.api.fetchAPIContentData(
                 //     contentType = ContentType.WORKOUT,
                 //     category = "Fitness",
                 //     bodyParts = listOf(BodyPart.ABS),
@@ -55,37 +50,30 @@ btnApiRequest.setOnClickListener {
                 // )
 
                 // FOR FETCHING EXERCISES LIST (with body parts)
-                // fetchContent(
-                //     apiKey = apiKey,
-                //     companyName = company,
+                // KinesteXAPI.api.fetchAPIContentData(
                 //     contentType = ContentType.EXERCISE,
                 //     bodyParts = listOf(BodyPart.ABS),
                 //     limit = 5
                 // )
 
                 // FOR FETCHING a Specific Plan
-                // fetchContent(
-                //     apiKey = apiKey,
-                //     companyName = company,
+                // KinesteXAPI.api.fetchAPIContentData(
                 //     contentType = ContentType.PLAN,
                 //     title = "Circuit Training"
                 // )
 
                 // FOR FETCHING a Specific Workout
-                // fetchContent(
-                //     apiKey = apiKey,
-                //     companyName = company,
+                // KinesteXAPI.api.fetchAPIContentData(
                 //     contentType = ContentType.WORKOUT,
                 //     title = "Fitness Lite"
                 // )
 
                 // FOR FETCHING a Specific Exercise
-                // fetchContent(
-                //     apiKey = apiKey,
-                //     companyName = company,
+                // KinesteXAPI.api.fetchAPIContentData(
                 //     contentType = ContentType.EXERCISE,
                 //     title = "Squats"
                 // )
+                
             }
 
             // Handle the result on the main thread
@@ -115,38 +103,27 @@ btnApiRequest.setOnClickListener {
 ### Fetch Content Function
 
 ```kotlin
-private suspend fun fetchContent(
-    apiKey: String,
-    companyName: String,
-    contentType: ContentType,
-    id: String? = null,
-    title: String? = null,
-    lang: String = "en",
-    category: String? = null,
-    lastDocId: String? = null,
-    limit: Int? = null,
-    bodyParts: List<BodyPart>? = null
-): APIContentResult {
-    return KinesteXAPI.fetchAPIContentData(
-        apiKey = apiKey,
-        companyName = companyName,
-        contentType = contentType,
-        id = id,
-        title = title,
-        lang = lang,
-        category = category,
-        lastDocId = lastDocId,
-        limit = limit,
-        bodyParts = bodyParts
-    )
-}
+    private suspend fun fetchContent(
+        contentType: ContentType,
+        id: String? = null, title: String? = null,
+        bodyParts: List<BodyPart>? = null, lastDocId: String? = null,
+        category: String? = null, limit: Int? = null
+    ): APIContentResult {
+            return KinesteXSDK.api.fetchAPIContentData(
+                contentType = contentType,
+                title = title,
+                id = id,
+                bodyParts = bodyParts,
+                lastDocId = lastDocId,
+                category = category,
+                limit = limit
+            )
+        }
 ```
 
 #### Explanation
 
 - **Parameters**:
-  - `apiKey`: Your KinesteX API key.
-  - `companyName`: Your company name registered with KinesteX.
   - `contentType`: The type of content to fetch (`WORKOUT`, `PLAN`, `EXERCISE`).
   - `id` *(optional)*: Specific ID of the content.
   - `title` *(optional)*: Title of the content to search for.
@@ -160,58 +137,44 @@ private suspend fun fetchContent(
 
 ```kotlin
 private fun handleAPIResult(result: APIContentResult) {
-    when (result) {
-        is APIContentResult.Workout -> {
-            val workout = result.workout
-            val gson = GsonBuilder().setPrettyPrinting().create()
-            val prettyJson = gson.toJson(workout)
-            println("Workout Data:\n$prettyJson")
-        }
-        is APIContentResult.Plan -> {
-            val plan = result.plan
-            val gson = GsonBuilder().setPrettyPrinting().create()
-            val prettyJson = gson.toJson(plan)
-            println("Plan Data:\n$prettyJson")
-        }
-        is APIContentResult.Exercise -> {
-            val exercise = result.exercise
-            val gson = GsonBuilder().setPrettyPrinting().create()
-            val prettyJson = gson.toJson(exercise)
-            println("Exercise Data:\n$prettyJson")
-        }
-        is APIContentResult.Workouts -> {
-            val workouts = result.workouts.workouts
-            workouts.forEach { workout ->
-                println("Workout Title: ${workout.title}")
-                println("Body Parts: ${workout.body_parts.joinToString { it.value }}")
-                println("LastDocId: ${result.workouts.lastDocId}")
+            when (result) {
+                is APIContentResult.Workout -> {
+                    val workout = result.workout
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(workout)
+                }
+                is APIContentResult.Plan -> {
+                    val workout = result.plan
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(workout)
+                }
+                is APIContentResult.Exercise -> {
+                    val workout = result.exercise
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(workout)
+                }
+                is APIContentResult.Workouts -> {
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(result.workouts)
+                }
+                is APIContentResult.Plans -> {
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(result.plans)
+                }
+
+                is APIContentResult.Exercises -> {
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    val prettyJson = gson.toJson(result.exercises)
+                }
+                is APIContentResult.Error -> {
+                    Toast.makeText(
+                        this,
+                        "Error: ${result.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
-        is APIContentResult.Plans -> {
-            val plans = result.plans.plans
-            plans.forEach { plan ->
-                println("Plan Title: ${plan.title}")
-                println("Categories: ${plan.category.description}")
-                println("LastDocId: ${result.plans.lastDocId}")
-            }
-        }
-        is APIContentResult.Exercises -> {
-            val exercises = result.exercises.exercises
-            exercises.forEach { exercise ->
-                println("Exercise Title: ${exercise.title}")
-                println("Body Parts: ${exercise.body_parts.joinToString { it.value }}")
-                println("LastDocId: ${result.exercises.lastDocId}")
-            }
-        }
-        is APIContentResult.Error -> {
-            Toast.makeText(
-                this,
-                "Error: ${result.message}",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-}
 ```
 
 #### Explanation
@@ -242,8 +205,6 @@ To implement pagination, utilize the `lastDocId` provided in the response of you
 ```kotlin
 // Initial Fetch
 val initialResult = fetchContent(
-    apiKey = apiKey,
-    companyName = company,
     contentType = ContentType.WORKOUT,
     category = "Fitness",
     limit = 5
@@ -261,8 +222,6 @@ val lastDocId = when (initialResult) {
 // Fetch Next Page Using lastDocId
 if (lastDocId != null) {
     val nextPageResult = fetchContent(
-        apiKey = apiKey,
-        companyName = company,
         contentType = ContentType.WORKOUT,
         category = "Fitness",
         limit = 5,

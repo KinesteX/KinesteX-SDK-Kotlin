@@ -1,7 +1,6 @@
 package com.kinestex.kinestexsdkkotlin
 
 import android.content.Context
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,22 +12,663 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.kinestex.kinestexsdkkotlin.api.ContentType
+import com.kinestex.kinestexsdkkotlin.api.KinesteXAPI
+import com.kinestex.kinestexsdkkotlin.core.GenericWebView
+import com.kinestex.kinestexsdkkotlin.core.KinesteXCredentials
+import com.kinestex.kinestexsdkkotlin.core.KinesteXInitializer
+import com.kinestex.kinestexsdkkotlin.core.KinesteXLogger
+import com.kinestex.kinestexsdkkotlin.core.KinesteXViewBuilder
+import com.kinestex.kinestexsdkkotlin.core.KinesteXWebViewController
+import com.kinestex.kinestexsdkkotlin.core.UrlHelper
+import com.kinestex.kinestexsdkkotlin.models.PlanCategory
+import com.kinestex.kinestexsdkkotlin.models.UserDetails
+import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
+import com.kinestex.kinestexsdkkotlin.models.WorkoutSequenceExercise
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
+// ============================================================
+// NEW ARCHITECTURE (v2.0) - Initialize-first pattern
+// ============================================================
+
 class KinesteXSDK {
     companion object {
-
-        private var cameraWebView: GenericWebView? = null
-
-        private const val how_to_video_link =
+        private val initializer = KinesteXInitializer()
+        private val credentials = KinesteXCredentials()
+        private var apiService: KinesteXAPI? = null
+        private val logger = KinesteXLogger.instance
+        private const val HOW_TO_VIDEO_LINK =
             "https://cdn.kinestex.com/SDK%2Fhow-to-video%2Fhowtovideo.webm?alt=media&token=9c1254eb-0726-4eed-b16e-4e3945c98b65"
-
         private var videoPlayer: ExoPlayer? = null
+
+        /**
+         * Initialize the KinesteX SDK
+         *
+         * Must be called before using any SDK features, typically in Application.onCreate()
+         * This enables the new credential-free API pattern.
+         *
+         * @param context Application context
+         * @param apiKey Your KinesteX API key
+         * @param companyName Your company identifier
+         * @param userId Current user identifier
+         * @throws IllegalStateException if already initialized
+         */
+        fun initialize(
+            context: Context,
+            apiKey: String,
+            companyName: String,
+            userId: String
+        ) {
+            logger.info("Initializing KinesteX SDK...")
+
+            // Initialize using the new architecture
+            initializer.initialize(context, apiKey, companyName, userId)
+            credentials.set(apiKey, companyName, userId)
+
+            // Create API service instance
+            apiService = KinesteXAPI(
+                apiKey = apiKey,
+                companyName = companyName
+            )
+
+            logger.success("KinesteX SDK initialized successfully")
+        }
+
+        /**
+         * Check if SDK is initialized
+         *
+         * @return true if SDK has been initialized, false otherwise
+         */
+        fun isInitialized(): Boolean = initializer.getIsInitialized()
+
+        /**
+         * Get API service instance for fetching workout/plan/exercise data
+         *
+         * Example usage:
+         * ```kotlin
+         * val result = KinesteXSDK.api.fetchAPIContentData(
+         *     contentType = ContentType.WORKOUT,
+         *     category = "Strength"
+         * )
+         * ```
+         *
+         * @throws IllegalStateException if SDK not initialized
+         */
+        val api: KinesteXAPI
+            get() = apiService
+                ?: throw IllegalStateException(
+                    "SDK not initialized. Call KinesteXSDK.initialize() first."
+                )
+
+        /**
+         * Dispose SDK resources
+         *
+         * Cleans up WebView cache, releases resources, and resets initialization state.
+         * SDK can be reinitialized after disposal if needed.
+         */
+        fun dispose() {
+            logger.info("Disposing KinesteX SDK...")
+
+            initializer.dispose()
+            apiService = null
+
+            // Also cleanup old static resources for safety
+            cleanup()
+
+            logger.success("KinesteX SDK disposed")
+        }
+
+        /**
+         * Cleans up static resources to prevent memory leaks
+         * Should be called when SDK resources are no longer needed
+         *
+         * NOTE: This is a temporary solution. In v2.0, static references will be removed entirely.
+         */
+        fun cleanup() {
+            try {
+                logger.info("Cleaning up static SDK resources...")
+
+                // Clean up video player
+                videoPlayer?.let { player ->
+                    player.stop()
+                    player.release()
+                    videoPlayer = null
+                }
+
+                logger.success("Static SDK resources cleaned up")
+            } catch (e: Exception) {
+                logger.error("Error cleaning up static SDK resources", e)
+            }
+        }
+
+        // ============================================================
+        // NEW VIEW CREATION METHODS (v2.0) - Credential-free pattern
+        // ============================================================
+
+        /**
+         * Creates a main view with category selection
+         *
+         * Requires SDK to be initialized first via `initialize()`
+         *
+         * @param context Activity or Fragment context
+         * @param planCategory Workout plan category (default: Cardio)
+         * @param user Optional user details (age, height, weight, etc.)
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for camera/storage permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createMainView(
+            context: Context,
+            planCategory: PlanCategory = PlanCategory.Cardio,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Build view-specific data
+            val data = mapOf(
+                "planC" to KinesteXViewBuilder.planCategoryString(planCategory)
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.mainView(),
+                data = data,
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a personalized plan view
+         *
+         * @param context Activity or Fragment context
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createPersonalizedPlanView(
+            context: Context,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Delegate to centralized builder (no view-specific data)
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.personalizedPlanView(),
+                data = emptyMap(),
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a custom workout with given exercises
+         *
+         * @param context Activity or Fragment context
+         * @param customWorkouts List of the exercises in custom workout
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createCustomWorkoutView(
+            context: Context,
+            customWorkouts: List<WorkoutSequenceExercise>,
+            user: UserDetails? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            customParams: Map<String, Any>? = null,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler,
+        ): WebView? {
+
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            val normalized = normalizeWorkoutExercises(customWorkouts)
+            if (normalized == null) {
+                logger.error("Validation Error: No valid exercises provided for custom workout")
+                return null
+            }
+
+            return KinesteXViewBuilder.build(
+                    context = context,
+                    apiKey = credentials.apiKey,
+                    companyName = credentials.companyName,
+                    userId = credentials.userId,
+                    url = UrlHelper.customWorkout(),
+                    data = mapOf(
+                        "customWorkoutExercises" to normalized
+                    ),
+                    user = user,
+                    customParams = customParams,
+                    isLoading = isLoading,
+                    permissionHandler = permissionHandler,
+                    onMessageReceived = onMessageReceived
+            ) as WebView?
+
+        }
+
+
+        /**
+         * Creates a plan view for a specific workout plan
+         *
+         * @param context Activity or Fragment context
+         * @param planName Name of the workout plan
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createPlanView(
+            context: Context,
+            planName: String,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Delegate to centralized builder (no view-specific data)
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.planView(planName),
+                data = emptyMap(),
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a workout view for a specific workout
+         *
+         * @param context Activity or Fragment context
+         * @param workoutName Name of the workout
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createWorkoutView(
+            context: Context,
+            workoutName: String,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Delegate to centralized builder (no view-specific data)
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.workoutView(workoutName),
+                data = emptyMap(),
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a challenge view for exercise competitions
+         *
+         * @param context Activity or Fragment context
+         * @param exercise Exercise name
+         * @param countdown Challenge countdown in seconds
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @param showLeaderboard Whether to show leaderboard
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createChallengeView(
+            context: Context,
+            exercise: String,
+            countdown: Int,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler,
+            showLeaderboard: Boolean = true
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Build view-specific data
+            val data = mapOf(
+                "exercise" to exercise,
+                "countdown" to countdown,
+                "showLeaderboard" to showLeaderboard
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.challengeView(),
+                data = data,
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a leaderboard view
+         *
+         * @param context Activity or Fragment context
+         * @param exercise Exercise name for leaderboard
+         * @param username Optional username filter
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createLeaderboardView(
+            context: Context,
+            exercise: String,
+            username: String = "",
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Build view-specific data
+            val data = mapOf(
+                "exercise" to exercise
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.leaderboardView(username),
+                data = data,
+                user = null,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates an experiences view
+         *
+         * @param context Activity or Fragment context
+         * @param experienceName Name of the experience
+         * @param countdown Experience countdown
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createExperiencesView(
+            context: Context,
+            experienceName: String,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.experienceView(experienceName),
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a camera component for custom exercise tracking
+         *
+         * @param context Activity or Fragment context
+         * @param exercises List of exercise names
+         * @param currentExercise Currently selected exercise
+         * @param user Optional user details
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createCameraComponent(
+            context: Context,
+            exercises: List<String>,
+            currentExercise: String,
+            user: UserDetails? = null,
+            customParams: MutableMap<String, Any>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            // Build view-specific data
+            val data = mapOf(
+                "exercises" to exercises,
+                "currentExercise" to currentExercise
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.cameraView(),
+                data = data,
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates an admin workout editor view
+         *
+         * Provides an admin interface for creating and editing workout content.
+         * Requires admin credentials and permissions.
+         *
+         * @param context Activity or Fragment context
+         * @param organization Organization identifier
+         * @param contentType Optional content type to edit (WORKOUT, PLAN, or EXERCISE)
+         * @param contentId Optional content ID to edit specific content
+         * @param customParams Optional custom parameters
+         * @param customQueries Optional custom query parameters for the URL
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createAdminWorkoutEditor(
+            context: Context,
+            organization: String,
+            contentType: ContentType? = null,
+            contentId: String? = null,
+            customParams: MutableMap<String, Any>? = null,
+            customQueries: Map<String, Any?>? = null,
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            // Validate organization
+            if (containsDisallowedCharacters(organization)) {
+                logger.error("Validation Error: organization contains disallowed characters")
+                return null
+            }
+
+            val credentials = credentials.get()
+
+            // Build the admin view URL
+            val url = UrlHelper.adminView(
+                contentType = contentType,
+                contentId = contentId,
+                customQueries = customQueries
+            )
+
+            // Build view-specific data
+            val data = mapOf(
+                "organization" to organization,
+                "apiKey" to credentials.apiKey,
+                "companyName" to credentials.companyName
+            )
+
+            // Delegate to centralized builder
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = url,
+                data = data,
+                user = null,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
+        /**
+         * Creates a how-to video view (does not require initialization)
+         *
+         * Shows an instructional video with custom controls.
+         * This is a standalone utility and doesn't require SDK initialization.
+         *
+         * @param context Activity or Fragment context
+         * @param onVideoEnd Callback when video finishes
+         * @param videoURL Optional custom video URL (defaults to KinesteX how-to video)
+         * @param onCloseClick Callback when close button clicked
+         * @return ViewGroup containing the video player
+         */
         fun createHowToView(
             context: Context,
             onVideoEnd: (Boolean) -> Unit,
-            videoURL: String? = how_to_video_link,  // Default value for videoURL
+            videoURL: String? = HOW_TO_VIDEO_LINK,  // Default value for videoURL
             onCloseClick: () -> Unit
         ): ViewGroup {
             val frameLayout = FrameLayout(context)
@@ -78,7 +718,7 @@ class KinesteXSDK {
             frameLayout.addView(closeButton)
 
             // Use the passed videoURL or the default one if not provided
-            val mediaItem = MediaItem.fromUri(videoURL ?: how_to_video_link)
+            val mediaItem = MediaItem.fromUri(videoURL ?: HOW_TO_VIDEO_LINK)
             videoPlayer?.setMediaItem(mediaItem)
             videoPlayer?.prepare()
             videoPlayer?.play()
@@ -94,39 +734,59 @@ class KinesteXSDK {
             return frameLayout
         }
 
-        private fun validateInput(
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            planCategory: PlanCategory,
-        ): String? {
-            // Perform validation checks here
-            // Return null if validation is successful, or an error message string if not
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                )
-            ) {
-                return "apiKey, companyName, or userId contains disallowed characters: < >, { }, ( ), [ ], ;, \", ', $, ., #, or <script>"
-            }
 
-            when (planCategory) {
-
-                is PlanCategory.Custom -> {
-                    if (planCategory.name.isEmpty()) {
-                        return "planCategory cannot be empty"
-                    } else if (containsDisallowedCharacters(planCategory.name)) {
-                        return "planCategory contains disallowed characters: < >, { }, ( ), [ ], ;, \", ', $, ., #, or <script>"
-                    }
-                }
-
-                else -> {
-                    return null
-                }
-            }
-
-            return null
+        /**
+         * Updates the current exercise in the camera component.
+         *
+         * Uses the singleton WebView controller to update the exercise dynamically.
+         * This method works because all views share the same WebView instance.
+         *
+         * @param exercise The name of the current exercise.
+         */
+        fun updateCurrentExercise(exercise: String) {
+            KinesteXWebViewController.getInstance().updateCurrentExercise(exercise)
         }
 
+        fun normalizeWorkoutExercises(
+            exercises: List<WorkoutSequenceExercise>?
+        ): List<Map<String, Any?>>? {
+
+            if (exercises == null || exercises.isEmpty()) {
+                return null
+            }
+
+            val normalizedExercises = mutableListOf<Map<String, Any?>>()
+
+            for (exercise in exercises) {
+
+                // Validate exerciseId
+                if (exercise.exerciseId.isEmpty() ||
+                    containsDisallowedCharacters(exercise.exerciseId)
+                ) {
+                    continue
+                }
+
+                // Validate numeric values
+                if ((exercise.reps != null && exercise.reps < 0) ||
+                    (exercise.duration != null && exercise.duration < 0) ||
+                    exercise.restDuration < 0
+                ) {
+                    continue
+                }
+
+                normalizedExercises.add(
+                    mapOf(
+                        "exerciseId" to exercise.exerciseId,
+                        "reps" to exercise.reps,
+                        "duration" to exercise.duration,
+                        "includeRestPeriod" to exercise.includeRestPeriod,
+                        "restDuration" to exercise.restDuration
+                    )
+                )
+            }
+
+            return if (normalizedExercises.isEmpty()) null else normalizedExercises
+        }
 
         private fun containsDisallowedCharacters(input: String): Boolean {
             val disallowedCharacters = setOf(
@@ -150,529 +810,5 @@ class KinesteXSDK {
             )
             return input.any { it in disallowedCharacters }
         }
-
-        private fun planCategoryString(category: PlanCategory): String {
-            return when (category) {
-                PlanCategory.Cardio -> "Cardio"
-                PlanCategory.WeightManagement -> "Weight Management"
-                PlanCategory.Strength -> "Strength"
-                PlanCategory.Rehabilitation -> "Rehabilitation"
-                is PlanCategory.Custom -> category.name
-            }
-        }
-
-        private fun genderString(gender: Gender): String {
-            return when (gender) {
-                Gender.MALE -> "Male"
-                Gender.FEMALE -> "Female"
-                Gender.UNKNOWN -> "Male"
-            }
-        }
-
-        private fun lifestyleString(lifestyle: Lifestyle): String {
-            return when (lifestyle) {
-                Lifestyle.SEDENTARY -> "Sedentary"
-                Lifestyle.SLIGHTLY_ACTIVE -> "Slightly Active"
-                Lifestyle.ACTIVE -> "Active"
-                Lifestyle.VERY_ACTIVE -> "Very Active"
-            }
-        }
-
-        fun createMainView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            planCategory: PlanCategory = PlanCategory.Cardio,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>? = null,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            val validationError = validateInput(apiKey, companyName, userId, planCategory)
-
-            if (validationError != null) {
-                Log.e("WebViewManager", "⚠️ Validation Error: $validationError")
-                return null
-            } else {
-                val data = mutableMapOf<String, Any>(
-                    "planC" to planCategoryString(planCategory)
-                )
-
-                user?.let {
-                    data["age"] = it.age
-                    data["height"] = it.height
-                    data["weight"] = it.weight
-                    data["gender"] = genderString(it.gender)
-                    data["lifestyle"] = lifestyleString(it.lifestyle)
-                }
-
-                validateCustomParams(customParams, data)
-
-                return GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = "https://kinestex.vercel.app",
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-
-        /**
-        Creates a view for a personalied workout plan. Keeps track of the progress for the plan, fitness assessment results, recommending the workouts according to the person's progression
-
-        - Parameters:
-        - apiKey: The API key for authentication.
-        - companyName: The name of the company using the framework provided by KinesteX
-        - userId: The unique identifier for the user.
-        - user: Optional user details including age, height, weight, gender, and lifestyle.
-        - isLoading: A binding to a Boolean value indicating if the view is loading.
-        - onMessageReceived: A closure that handles messages received from the WebView.
-         */
-
-        fun createPersonalizedPlanView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>? = null,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                )
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "⚠️ Validation Error: apiKey, companyName, or userId contains disallowed characters"
-                )
-                return null
-            } else {
-                val url =
-                    "https://kinestex.vercel.app/personalized-plan"
-                val data = mutableMapOf<String, Any>()
-
-                user?.let {
-                    data["age"] = it.age
-                    data["height"] = it.height
-                    data["weight"] = it.weight
-                    data["gender"] = genderString(it.gender)
-                    data["lifestyle"] = lifestyleString(it.lifestyle)
-                }
-
-                validateCustomParams(customParams, data)
-
-                return GenericWebView(
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = url,
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    context = context,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        /**
-        Creates a view for a specific workout plan. Keeps track of the progress for that particular plan, recommending the workouts according to the person's progression
-
-        - Parameters:
-        - apiKey: The API key for authentication.
-        - companyName: The name of the company using the framework provided by KinesteX
-        - userId: The unique identifier for the user.
-        - planName: The name of the workout plan.
-        - user: Optional user details including age, height, weight, gender, and lifestyle.
-        - isLoading: A binding to a Boolean value indicating if the view is loading.
-        - onMessageReceived: A closure that handles messages received from the WebView.
-         */
-
-        fun createPlanView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            planName: String,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>? = null,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                ) || containsDisallowedCharacters(planName)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "⚠️ Validation Error: apiKey, companyName, userId, or planName contains disallowed characters"
-                )
-                return null
-            } else {
-                val adjustedPlanName = planName.replace(" ", "%20")
-                val url =
-                    "https://kinestex.vercel.app/plan/$adjustedPlanName"
-                val data = mutableMapOf<String, Any>()
-
-                user?.let {
-                    data["age"] = it.age
-                    data["height"] = it.height
-                    data["weight"] = it.weight
-                    data["gender"] = genderString(it.gender)
-                    data["lifestyle"] = lifestyleString(it.lifestyle)
-                }
-
-                validateCustomParams(customParams, data)
-
-                return GenericWebView(
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = url,
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    context = context,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        /**
-        Creates a view for a specific workout.
-
-        - Parameters:
-        - apiKey: The API key for authentication.
-        - companyName: The name of the company using the framework.
-        - userId: The unique identifier for the user.
-        - workoutName: The name of the workout.
-        - user: Optional user details including age, height, weight, gender, and lifestyle.
-        - isLoading: A binding to a Boolean value indicating if the view is loading.
-        - onMessageReceived: A closure that handles messages received from the WebView.
-         */
-
-        fun createWorkoutView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            workoutName: String,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>? = null,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                ) || containsDisallowedCharacters(workoutName)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "Validation Error: apiKey, companyName, userId, or workoutName contains disallowed characters"
-                )
-                return null
-            } else {
-                val adjustedWorkoutName = workoutName.replace(" ", "%20")
-                val url =
-                    "https://kinestex.vercel.app/workout/$adjustedWorkoutName"
-
-                val data: MutableMap<String, Any> = mutableMapOf(
-                    "age" to (user?.age ?: ""),
-                    "height" to (user?.height ?: ""),
-                    "weight" to (user?.weight ?: ""),
-                    "gender" to (user?.gender?.let { genderString(it) } ?: ""),
-                    "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
-                )
-
-                validateCustomParams(customParams, data)
-
-
-                return GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = url,
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        /**
-        Creates a view for a specific exercise challenge.
-
-        - Parameters:
-        - apiKey: The API key for authentication.
-        - companyName: The name of the company using the framework.
-        - userId: The unique identifier for the user.
-        - exercise: The name of the exercise (default is "Squats").
-        - countdown: The countdown time for the challenge.
-        - user: Optional user details including age, height, weight, gender, and lifestyle.
-        - isLoading: A binding to a Boolean value indicating if the view is loading.
-        - onMessageReceived: A closure that handles messages received from the WebView.
-         */
-
-        fun createChallengeView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            exercise: String,
-            countdown: Int,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>?,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler,
-            showLeaderboard: Boolean = true,
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                ) || containsDisallowedCharacters(exercise)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "Validation Error: apiKey, companyName, userId, or exercise contains disallowed characters"
-                )
-                return null
-            } else {
-                val data: MutableMap<String, Any> = mutableMapOf(
-                    "exercise" to exercise,
-                    "countdown" to countdown,
-                    "showLeaderboard" to showLeaderboard,
-                    "age" to (user?.age ?: ""),
-                    "height" to (user?.height ?: ""),
-                    "weight" to (user?.weight ?: ""),
-                    "gender" to (user?.gender?.let { genderString(it) } ?: ""),
-                    "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
-                )
-
-                validateCustomParams(customParams, data)
-
-
-                return GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = "https://kinestex.vercel.app/challenge",
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        fun createLeaderboardView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            exercise: String,
-            username: String = "",
-            customParams: MutableMap<String, Any>?,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                ) || containsDisallowedCharacters(exercise)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "Validation Error: apiKey, companyName, userId, or exercise contains disallowed characters"
-                )
-                return null
-            } else {
-                val data: MutableMap<String, Any> = mutableMapOf(
-                    "exercise" to exercise,
-                )
-
-                validateCustomParams(customParams, data)
-                var url = "https://kinestex.vercel.app/leaderboard"
-                if (!containsDisallowedCharacters(username)){
-                   if (username.isNotEmpty()){
-                       url += "?username=$username"
-                   }
-                } else {
-                    Log.e(
-                        "WebViewManager",
-                        "Validation Error: username contains disallowed characters"
-                    )
-                }
-
-                return GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = url,
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        fun createExperiencesView(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            experienceName: String,
-            countdown: Int,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>?,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            if (containsDisallowedCharacters(apiKey) || containsDisallowedCharacters(companyName) || containsDisallowedCharacters(
-                    userId
-                ) || containsDisallowedCharacters(experienceName)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "Validation Error: apiKey, companyName, userId, or exercise contains disallowed characters"
-                )
-                return null
-            } else {
-                val data: MutableMap<String, Any> = mutableMapOf(
-                    "countdown" to countdown,
-                    "age" to (user?.age ?: ""),
-                    "height" to (user?.height ?: ""),
-                    "weight" to (user?.weight ?: ""),
-                    "gender" to (user?.gender?.let { genderString(it) } ?: ""),
-                    "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
-                )
-
-                validateCustomParams(customParams, data)
-
-
-                return GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = "https://kinestex.vercel.app/experiences/${experienceName.lowercase()}",
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-            }
-        }
-
-        fun createCameraComponent(
-            context: Context,
-            apiKey: String,
-            companyName: String,
-            userId: String,
-            exercises: List<String>,
-            currentExercise: String,
-            user: UserDetails?,
-            customParams: MutableMap<String, Any>? = null,
-            isLoading: MutableStateFlow<Boolean>,
-            onMessageReceived: (WebViewMessage) -> Unit,
-            permissionHandler: PermissionHandler
-        ): WebView? {
-            for (exercise in exercises) {
-                if (containsDisallowedCharacters(exercise)) {
-                    Log.e(
-                        "WebViewManager",
-                        "Validation Error: $exercise contains disallowed characters"
-                    )
-                    return null
-                }
-            }
-            if (containsDisallowedCharacters(apiKey)
-                || containsDisallowedCharacters(companyName)
-                || containsDisallowedCharacters(
-                    userId
-                )
-                || containsDisallowedCharacters(currentExercise)
-            ) {
-                Log.e(
-                    "WebViewManager",
-                    "Validation Error: apiKey, companyName, userId, or currentExercise contains disallowed characters"
-                )
-                return null
-            } else {
-                val data: MutableMap<String, Any> = mutableMapOf(
-                    "exercises" to exercises,
-                    "currentExercise" to currentExercise,
-                    "age" to (user?.age ?: ""),
-                    "height" to (user?.height ?: ""),
-                    "weight" to (user?.weight ?: ""),
-                    "gender" to (user?.gender?.let { genderString(it) } ?: ""),
-                    "lifestyle" to (user?.lifestyle?.let { lifestyleString(it) } ?: "")
-                )
-
-                validateCustomParams(customParams, data)
-
-                val cameraWebViewInstance = GenericWebView(
-                    context = context,
-                    apiKey = apiKey,
-                    companyName = companyName,
-                    userId = userId,
-                    url = "https://kinestex.vercel.app/camera",
-                    data = data,
-                    isLoading = isLoading,
-                    onMessageReceived = onMessageReceived,
-                    permissionHandler = permissionHandler
-                )
-
-                cameraWebView = cameraWebViewInstance
-                return cameraWebViewInstance
-            }
-        }
-
-        private fun validateCustomParams(
-            customParams: MutableMap<String, Any>?,
-            data: MutableMap<String, Any>
-        ) {
-            customParams?.let {
-                for ((key, value) in customParams) {
-                    if (containsDisallowedCharacters(key) || (value as? String)?.let {
-                            containsDisallowedCharacters(
-                                it
-                            )
-                        } == true) {
-                        println("⚠️ Validation Error: Custom parameter key or value contains disallowed characters")
-                    } else {
-                        data[key] = value
-                    }
-                }
-            }
-        }
-
-        /**
-         * Updates the current exercise in the camera component.
-         *
-         * @param exercise The name of the current exercise.
-         */
-        fun updateCurrentExercise(exercise: String) {
-            cameraWebView?.updateCurrentExercise(exercise)
-        }
-
     }
 }

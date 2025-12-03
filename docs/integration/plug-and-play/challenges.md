@@ -15,9 +15,6 @@ You can find exercises in our library [here](https://workout-view.kinestex.com/?
 
     kinesteXWebView = KinesteXSDK.createChallengeView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     "Squats", // name or ID of the exercise
                     100, // countdown of the challenge
                     userDetails, // userDetails or null

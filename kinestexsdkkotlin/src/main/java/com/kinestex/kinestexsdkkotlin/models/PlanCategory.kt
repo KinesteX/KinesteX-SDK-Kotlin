@@ -1,10 +1,28 @@
-package com.kinestex.kinestexsdkkotlin
+package com.kinestex.kinestexsdkkotlin.models
 
+/**
+ * Workout plan categories for filtering and selection
+ *
+ * Represents different types of workout plans available in KinesteX.
+ * Use predefined categories or create custom ones.
+ */
 sealed class PlanCategory {
+    /** Cardio-focused workout plans */
     object Cardio : PlanCategory()
+
+    /** Weight management and loss plans */
     object WeightManagement : PlanCategory()
+
+    /** Strength training and muscle building plans */
     object Strength : PlanCategory()
+
+    /** Rehabilitation and recovery plans */
     object Rehabilitation : PlanCategory()
+
+    /**
+     * Custom plan category
+     * @param name Custom category name
+     */
     data class Custom(val name: String) : PlanCategory()
 
     override fun equals(other: Any?): Boolean {

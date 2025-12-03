@@ -18,11 +18,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var kinesteXWebView: GenericWebView
     private val isLoading = MutableStateFlow(false)
 
-    // Replace with your KinesteX credentials
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-    private val userId = "YOUR USER ID"
-
     // Plan category for personalized fitness goals
     private val planCategory = PlanCategory.Cardio
 
@@ -38,9 +33,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
         // Present the view and initialize it
         kinesteXWebView = KinesteXSDK.createMainView(
             this,
-            apiKey,
-            company,
-            userId,
             planCategory,
             user = null, // UserDetails or null
             customParams = data, // example of using custom parameters. CAN BE NULL

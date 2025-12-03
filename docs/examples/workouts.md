@@ -17,11 +17,6 @@ class WorkoutActivity : AppCompatActivity(), PermissionHandler {
     private lateinit var kinesteXWebView: GenericWebView
     private val isLoading = MutableStateFlow(false)
 
-    // Replace with your KinesteX credentials
-    private val apiKey = "YOUR API KEY"
-    private val company = "YOUR COMPANY NAME"
-    private val userId = "YOUR USER ID"
-
     // Workout title
     private val workoutTitle = "Fitness Lite"
 
@@ -33,9 +28,6 @@ class WorkoutActivity : AppCompatActivity(), PermissionHandler {
         // Present the view and initialize it
         kinesteXWebView = KinesteXSDK.createWorkoutView(
             this,
-            apiKey,
-            company,
-            userId,
             workoutTitle,
             user = null, // UserDetails or null
             customParams = null, // example of using custom parameters. CAN BE NULL

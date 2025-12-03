@@ -17,9 +17,6 @@ You can find workout plans in our library [here](https://workout-view.kinestex.c
 
      kinesteXWebView = KinesteXSDK.createPlanView(
                     this,
-                    apiKey,
-                    company,
-                    userId,
                     "Circuit Training", // name or ID of the workout plan
                     userDetails, // userDetails or null
                     data, // custom parameters or null
