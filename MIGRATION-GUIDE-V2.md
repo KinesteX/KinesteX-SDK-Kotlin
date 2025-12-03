@@ -1,5 +1,3 @@
-Here is the simplified, "Get it done" version of the migration guide.
-
 # KinesteX SDK v2.0 - Quick Migration Guide
 
 **The TL;DR:**
