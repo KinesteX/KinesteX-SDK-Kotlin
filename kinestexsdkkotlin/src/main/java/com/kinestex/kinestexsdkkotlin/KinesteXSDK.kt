@@ -502,7 +502,6 @@ class KinesteXSDK {
         fun createExperiencesView(
             context: Context,
             experienceName: String,
-            countdown: Int,
             user: UserDetails? = null,
             customParams: MutableMap<String, Any>? = null,
             isLoading: MutableStateFlow<Boolean>,
@@ -515,10 +514,6 @@ class KinesteXSDK {
 
             val credentials = credentials.get()
 
-            // Build view-specific data
-            val data = mapOf(
-                "countdown" to countdown
-            )
 
             // Delegate to centralized builder
             return KinesteXViewBuilder.build(
@@ -527,7 +522,6 @@ class KinesteXSDK {
                 companyName = credentials.companyName,
                 userId = credentials.userId,
                 url = UrlHelper.experienceView(experienceName),
-                data = data,
                 user = user,
                 customParams = customParams,
                 isLoading = isLoading,
