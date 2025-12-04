@@ -40,8 +40,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":kinestexsdkkotlin"))
-//    implementation("com.github.KinesteX:KinesteX-SDK-Kotlin:1.2.3")
+//    implementation(project(":kinestexsdkkotlin"))
+    implementation(libs.kinestex.sdk.kotlin)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.ktx)

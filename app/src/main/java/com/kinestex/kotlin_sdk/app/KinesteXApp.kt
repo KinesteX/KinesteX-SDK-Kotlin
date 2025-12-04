@@ -10,7 +10,7 @@ class KinesteXApp : Application() {
         KinesteXSDK.initialize(
             context = this,
             apiKey = "your-api-key",
-            companyName = "your-company",
+            companyName = "your-company-name",
             userId = "your-user-id"
         )
     }
