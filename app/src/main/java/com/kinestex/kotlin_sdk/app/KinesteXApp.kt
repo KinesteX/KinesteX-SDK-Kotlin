@@ -9,9 +9,9 @@ class KinesteXApp : Application() {
 
         KinesteXSDK.initialize(
             context = this,
-            apiKey = "your-api-key",
-            companyName = "your-company",
-            userId = "your-user-id"
+            apiKey = "13c5398cf7a98e3469f6fc8a9a5b2b9d5c8a4814",
+            companyName = "KinesteX",
+            userId = "GibOrTgo2KNuldDYrTARMnqba2T2"
         )
     }
 }
