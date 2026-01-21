@@ -1,22 +1,21 @@
 package com.kinestex.kinestexsdkkotlin.models
 
 data class IStyle(
-    val style: String? = null,
+    val style: String? = "dark",
     val themeName: String? = null,
     val loadingStickmanColor: String? = null,
     val loadingBackgroundColor: String? = null,
     val loadingTextColor: String? = null
 ) {
+    fun toQueryParams(): Map<String, String> {
+        val params = mutableMapOf<String, String>()
 
-    fun toJson(): Map<String, Any> {
-        val data = mutableMapOf<String, Any>()
+        style?.let { params["style"] = it }
+        themeName?.let { params["themeName"] = it }
+        loadingStickmanColor?.let { params["loadingStickmanColor"] = it }
+        loadingBackgroundColor?.let { params["loadingBackgroundColor"] = it }
+        loadingTextColor?.let { params["loadingTextColor"] = it }
 
-        style?.let { data["style"] = it }
-        themeName?.let { data["themeName"] = it }
-        loadingStickmanColor?.let { data["loadingStickmanColor"] = it }
-        loadingBackgroundColor?.let { data["loadingBackgroundColor"] = it }
-        loadingTextColor?.let { data["loadingTextColor"] = it }
-
-        return data
+        return params
     }
 }

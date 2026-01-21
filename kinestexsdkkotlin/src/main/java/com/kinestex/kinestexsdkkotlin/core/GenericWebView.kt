@@ -93,12 +93,12 @@ class GenericWebView(
             data = data,
             permissionHandler = permissionHandler,
             onMessageReceived = { message ->
-                if (message is WebViewMessage.KinestexLaunched) {
+                if (message is WebViewMessage.KinestexLoaded) {
                     // IMPORTANT: UI changes must happen on main thread
                     // The callback is called from JavaBridge thread
-                    Handler(Looper.getMainLooper()).post {
+                    Handler(Looper.getMainLooper()).postDelayed({
                         overlayView.visibility = View.GONE
-                    }
+                    }, 350)
                 }
                 onMessageReceived(message)
             },

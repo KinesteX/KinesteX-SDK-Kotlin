@@ -65,9 +65,9 @@ object KinesteXViewBuilder {
         }
 
         // Step 2: Build final data map
+        // Note: Style params are now passed via URL query params, not in the data map
         val finalData = data.toMutableMap()
         addUserDetails(finalData, user)
-        addCustomStyle(finalData, style)
         mergeCustomParams(finalData, customParams)
 
         logger.info("KinesteXViewBuilder: $apiKey - $companyName - $userId")
@@ -112,27 +112,6 @@ object KinesteXViewBuilder {
             data["weight"] = it.weight
             data["gender"] = genderString(it.gender)
             data["lifestyle"] = lifestyleString(it.lifestyle)
-        }
-    }
-
-    private fun addCustomStyle(
-        data: MutableMap<String, Any>,
-        style: IStyle?,
-    ) {
-        style?.toJson()?.forEach { (key, value) ->
-            // Validate key
-            if (containsDisallowedCharacters(key)) {
-                logger.error("Custom style key '$key' contains disallowed characters")
-                return@forEach
-            }
-
-            // Validate string values
-            if (value is String && containsDisallowedCharacters(value)) {
-                logger.error("Custom style '$key' value contains disallowed characters")
-                return@forEach
-            }
-
-            data[key] = value
         }
     }
 

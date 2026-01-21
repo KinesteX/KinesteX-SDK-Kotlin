@@ -544,6 +544,7 @@ class KinesteXWebViewController private constructor() {
 
                 val webViewMessage = when (type) {
                     "kinestex_launched" -> WebViewMessage.KinestexLaunched(dataMap)
+                    "kinestex_loaded" -> WebViewMessage.KinestexLoaded(dataMap)
                     "finished_workout" -> WebViewMessage.FinishedWorkout(dataMap)
                     "error_occurred" -> WebViewMessage.ErrorOccurred(dataMap)
                     "exercise_completed" -> WebViewMessage.ExerciseCompleted(dataMap)
