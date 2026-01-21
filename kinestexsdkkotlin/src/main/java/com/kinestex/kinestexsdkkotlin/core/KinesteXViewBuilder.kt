@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.models.Gender
+import com.kinestex.kinestexsdkkotlin.models.IStyle
 import com.kinestex.kinestexsdkkotlin.models.Lifestyle
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.UserDetails
@@ -51,6 +52,7 @@ object KinesteXViewBuilder {
         url: String,
         data: Map<String, Any> = emptyMap(),
         user: UserDetails? = null,
+        style: IStyle? = null,
         customParams: Map<String, Any>? = null,
         isLoading: MutableStateFlow<Boolean>,
         permissionHandler: PermissionHandler,
@@ -65,11 +67,16 @@ object KinesteXViewBuilder {
         // Step 2: Build final data map
         val finalData = data.toMutableMap()
         addUserDetails(finalData, user)
+        addCustomStyle(finalData, style)
         mergeCustomParams(finalData, customParams)
 
         logger.info("KinesteXViewBuilder: $apiKey - $companyName - $userId")
 
-        // Step 3: Create and return WebView
+        // Step 3: Determine overlay color from IStyle
+        val overlayColor = style?.loadingBackgroundColor?.let { colorFromHex(it) }
+            ?: Color.BLACK
+
+        // Step 4: Create and return WebView
         return GenericWebView(
             context = context,
             apiKey = apiKey,
@@ -77,6 +84,7 @@ object KinesteXViewBuilder {
             userId = userId,
             url = url,
             data = finalData,
+            overlayColor = overlayColor,
             isLoading = isLoading,
             permissionHandler = permissionHandler,
             onMessageReceived = onMessageReceived
@@ -104,6 +112,27 @@ object KinesteXViewBuilder {
             data["weight"] = it.weight
             data["gender"] = genderString(it.gender)
             data["lifestyle"] = lifestyleString(it.lifestyle)
+        }
+    }
+
+    private fun addCustomStyle(
+        data: MutableMap<String, Any>,
+        style: IStyle?,
+    ) {
+        style?.toJson()?.forEach { (key, value) ->
+            // Validate key
+            if (containsDisallowedCharacters(key)) {
+                logger.error("Custom style key '$key' contains disallowed characters")
+                return@forEach
+            }
+
+            // Validate string values
+            if (value is String && containsDisallowedCharacters(value)) {
+                logger.error("Custom style '$key' value contains disallowed characters")
+                return@forEach
+            }
+
+            data[key] = value
         }
     }
 
@@ -197,5 +226,20 @@ object KinesteXViewBuilder {
             Lifestyle.ACTIVE -> "Active"
             Lifestyle.VERY_ACTIVE -> "Very Active"
         }
+    }
+
+    /**
+     * Converts hex color string to Android Color int
+     * Supports both #RGB and #RRGGBB formats
+     */
+    private fun colorFromHex(hex: String): Int {
+        var cleanHex = hex.replace("#", "")
+
+        // If only RGB (6 chars), add full opacity (FF)
+        if (cleanHex.length == 6) {
+            cleanHex = "FF$cleanHex"
+        }
+
+        return android.graphics.Color.parseColor("#$cleanHex")
     }
 }

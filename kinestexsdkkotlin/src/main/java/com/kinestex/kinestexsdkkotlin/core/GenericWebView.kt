@@ -3,7 +3,11 @@ package com.kinestex.kinestexsdkkotlin.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import android.webkit.*
+import android.widget.FrameLayout
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +21,7 @@ class GenericWebView(
     private val companyName: String,
     private val userId: String,
     private val url: String,
+    private val overlayColor: Int,
     private val onMessageReceived: (WebViewMessage) -> Unit,
     private val isLoading: MutableStateFlow<Boolean>,
     private val data: Map<String, Any>,
@@ -62,6 +67,14 @@ class GenericWebView(
             get() = controller.isWarmedUp()
     }
 
+    private val overlayView: View = View(context).apply {
+        setBackgroundColor(overlayColor)
+        layoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        )
+    }
+
     init {
         setupView()
     }
@@ -79,7 +92,16 @@ class GenericWebView(
             url = url,
             data = data,
             permissionHandler = permissionHandler,
-            onMessageReceived = onMessageReceived,
+            onMessageReceived = { message ->
+                if (message is WebViewMessage.KinestexLaunched) {
+                    // IMPORTANT: UI changes must happen on main thread
+                    // The callback is called from JavaBridge thread
+                    Handler(Looper.getMainLooper()).post {
+                        overlayView.visibility = View.GONE
+                    }
+                }
+                onMessageReceived(message)
+            },
             isLoading = isLoading
         )
 
@@ -96,6 +118,10 @@ class GenericWebView(
                 )
             )
         }
+
+        // Add overlay on top and ensure it's visible for each new view
+        overlayView.visibility = View.VISIBLE
+        addView(overlayView)
     }
 
     /**
