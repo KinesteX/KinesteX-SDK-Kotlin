@@ -19,9 +19,8 @@ class ExperiencesActivity : AppCompatActivity(), PermissionHandler {
     private val isLoading = MutableStateFlow(false)
 
     // Experience details
-    private val experienceName = "box"
-    private val experienceDuration = 100 // in seconds
-
+    private val experienceName = "assessment"
+    
     @SuppressLint("SetJavaScriptEnabled", "MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

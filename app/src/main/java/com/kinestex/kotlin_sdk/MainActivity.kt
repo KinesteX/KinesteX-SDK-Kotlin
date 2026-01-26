@@ -302,13 +302,17 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             }
 
             5 -> {
+                val data = mutableMapOf<String, Any>()
+
+                 data["exercise"] = "balloonpop" // passing forcefully the style theme // data["isHideHeaderMain"] = false // should display header in main screen
+
                 webView = KinesteXSDK.createExperiencesView(
                     this,
                     subOption ?: "",
                     60,
                     null,
                     null,
-                    customParams = null,
+                    customParams = data,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
                     permissionHandler = this
