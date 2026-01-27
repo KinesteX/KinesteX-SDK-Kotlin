@@ -15,6 +15,9 @@ sealed class WebViewMessage {
      */
     data class KinestexLaunched(val data: Map<String, Any>) : WebViewMessage()
 
+    /** Sent when KinesteX view has loaded **/
+    data class KinestexLoaded(val data: Map<String, Any>) : WebViewMessage()
+
     /** Sent when a workout has been completed */
     data class FinishedWorkout(val data: Map<String, Any>) : WebViewMessage()
 

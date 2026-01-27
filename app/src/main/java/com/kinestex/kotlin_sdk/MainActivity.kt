@@ -6,8 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -26,6 +24,7 @@ import com.kinestex.kinestexsdkkotlin.core.GenericWebView
 import com.kinestex.kinestexsdkkotlin.KinesteXSDK
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
 import com.kinestex.kinestexsdkkotlin.core.KinesteXWebViewController
+import com.kinestex.kinestexsdkkotlin.models.IStyle
 import com.kinestex.kinestexsdkkotlin.models.PlanCategory
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import com.kinestex.kinestexsdkkotlin.models.WorkoutSequenceExercise
@@ -246,6 +245,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     getPlanCategory(subOption),
                     null,
+                    null,
                     customParams = data, // example of using custom parameters
                     viewModel.isLoading,
                     ::handleWebViewMessage,
@@ -255,15 +255,16 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             }
 
             1 -> {
-
-                val data = mutableMapOf<String, Any>()
-                data["style"] = "light" // passing forcefully the planCategory
-
                 webView = KinesteXSDK.createPlanView(
                     this,
                     subOption ?: "Circuit Training",
                     null,
-                    data,
+                    style = IStyle(
+                        style = "light",
+                        loadingBackgroundColor = "FFFFFF",
+                        loadingTextColor = "000000",
+                    ),
+                    null,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
                     this
@@ -277,6 +278,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     subOption ?: "Fitness Lite",
                     null,
+                    null,
                     isLoading = viewModel.isLoading,
                     onMessageReceived = ::handleWebViewMessage,
                     permissionHandler = this
@@ -289,6 +291,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     subOption ?: "",
                     100,
+                    null,
                     null,
                     customParams = null,
                     viewModel.isLoading,
@@ -305,7 +308,9 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
 
                 webView = KinesteXSDK.createExperiencesView(
                     this,
-                    "assessment",
+                    subOption ?: "",
+                    60,
+                    null,
                     null,
                     customParams = data,
                     viewModel.isLoading,
@@ -319,6 +324,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     "Squats",
                     username = "", // optional username
+                    null,
                     customParams = null,
                     viewModel.isLoading,
                     ::handleWebViewMessage,
@@ -331,6 +337,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 webView = KinesteXSDK.createCustomWorkoutView(
                     this,
                     customWorkouts = customWorkoutExercises,
+                    null,
                     customParams = null,
                     isLoading = viewModel.isLoading,
                     onMessageReceived = { message ->
@@ -345,6 +352,7 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                     this,
                     organization = "KinesteX",
                     isLoading = viewModel.isLoading,
+                    style = null,
                     onMessageReceived = { message ->
                         handleWebViewMessage(message = message)
                     },

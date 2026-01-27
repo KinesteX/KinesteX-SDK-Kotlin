@@ -3,41 +3,59 @@ package com.kinestex.kinestexsdkkotlin.core
 import android.net.Uri
 import android.util.Log
 import com.kinestex.kinestexsdkkotlin.api.ContentType
+import com.kinestex.kinestexsdkkotlin.models.IStyle
+import androidx.core.net.toUri
 
 object UrlHelper {
     private const val BASE_URL = "https://ai.kinestex.com"
     private const val ADMIN_BASE_URL = "https://admin.kinestex.com"
 
-    fun mainView(): String = BASE_URL
+    /**
+     * Appends style query parameters to a base URL
+     * Uses Uri.Builder to properly encode values (handles # in hex colors, etc.)
+     */
+    private fun appendStyleParams(baseUrl: String, style: IStyle): String {
+        val params = style.toQueryParams()
+        if (params.isEmpty()) return baseUrl
 
-    fun planView(planName: String): String {
+        val uri = baseUrl.toUri().buildUpon()
+        params.forEach { (key, value) ->
+            uri.appendQueryParameter(key, value)
+        }
+        return uri.build().toString()
+    }
+
+    fun mainView(style: IStyle): String = appendStyleParams(BASE_URL, style)
+
+    fun planView(planName: String, style: IStyle): String {
         val encoded = Uri.encode(planName)
-        return "$BASE_URL/plan/$encoded"
+        return appendStyleParams("$BASE_URL/plan/$encoded", style)
     }
 
-    fun workoutView(workoutName: String): String {
+    fun workoutView(workoutName: String, style: IStyle): String {
         val encoded = Uri.encode(workoutName)
-        return "$BASE_URL/workout/$encoded"
+        return appendStyleParams("$BASE_URL/workout/$encoded", style)
     }
 
-    fun challengeView(): String = "$BASE_URL/challenge"
+    fun challengeView(style: IStyle): String = appendStyleParams("$BASE_URL/challenge", style)
 
-    fun leaderboardView(username: String = ""): String {
-        return if (username.isNotEmpty()) {
+    fun leaderboardView(username: String = "", style: IStyle): String {
+        val baseUrl = if (username.isNotEmpty()) {
             "$BASE_URL/leaderboard?username=$username"
         } else {
             "$BASE_URL/leaderboard"
         }
+        return appendStyleParams(baseUrl, style)
     }
 
-    fun customWorkout(): String = "$BASE_URL/custom-workout"
+    fun customWorkout(style: IStyle): String = appendStyleParams("$BASE_URL/custom-workout", style)
 
-    fun experienceView(experience: String): String {
+    fun experienceView(experience: String, style: IStyle): String {
         val encoded = Uri.encode(experience.lowercase())
-        return "$BASE_URL/experiences/$encoded"
+        return appendStyleParams("$BASE_URL/experiences/$encoded", style)
     }
 
-    fun personalizedPlanView(): String = "$BASE_URL/personalized-plan"
+    fun personalizedPlanView(style: IStyle): String = appendStyleParams("$BASE_URL/personalized-plan", style)
 
     fun adminView(
         contentType: ContentType?,
@@ -79,7 +97,7 @@ object UrlHelper {
         return uri.toString()
     }
 
-    fun cameraView(): String = "$BASE_URL/camera"
+    fun cameraView(style: IStyle): String = appendStyleParams("$BASE_URL/camera", style)
 
     /**
      * Converts ContentType enum to URL segment string
