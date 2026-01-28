@@ -73,8 +73,11 @@ object KinesteXViewBuilder {
         logger.info("KinesteXViewBuilder: $apiKey - $companyName - $userId")
 
         // Step 3: Determine overlay color from IStyle
-        val overlayColor = style?.loadingBackgroundColor?.let { colorFromHex(it) }
-            ?: Color.BLACK
+        val overlayColor = when {
+            style?.loadingBackgroundColor != null -> colorFromHex(style.loadingBackgroundColor)
+            style?.style == "light" -> Color.WHITE
+            else -> Color.BLACK
+        }
 
         // Step 4: Create and return WebView
         return GenericWebView(
