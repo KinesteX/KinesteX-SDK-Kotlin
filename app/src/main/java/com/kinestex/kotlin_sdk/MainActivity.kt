@@ -309,7 +309,6 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
                 webView = KinesteXSDK.createExperiencesView(
                     this,
                     "assessment",
-                    60,
                     null,
                     null,
                     customParams = data,
