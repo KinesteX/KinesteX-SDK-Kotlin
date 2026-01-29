@@ -530,7 +530,6 @@ class KinesteXSDK {
 
             val credentials = credentials.get()
 
-
             // Delegate to centralized builder
             return KinesteXViewBuilder.build(
                 context = context,
@@ -539,7 +538,7 @@ class KinesteXSDK {
                 userId = credentials.userId,
                 url = UrlHelper.experienceView(experienceName, style ?: IStyle()),
                 style = style,
-                data = data,
+                data = emptyMap(),
                 user = user,
                 customParams = customParams,
                 isLoading = isLoading,
