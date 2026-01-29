@@ -517,6 +517,7 @@ class KinesteXSDK {
         fun createExperiencesView(
             context: Context,
             experienceName: String,
+            countdown: Int,
             user: UserDetails? = null,
             style: IStyle? = null,
             customParams: MutableMap<String, Any>? = null,
@@ -529,6 +530,11 @@ class KinesteXSDK {
             }
 
             val credentials = credentials.get()
+
+            // Build view-specific data
+            val data = mapOf(
+                "countdown" to countdown
+            )
 
 
             // Delegate to centralized builder
