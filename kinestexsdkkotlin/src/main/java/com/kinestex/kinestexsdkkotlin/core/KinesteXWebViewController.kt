@@ -209,14 +209,7 @@ class KinesteXWebViewController private constructor() {
                         logger.info("Page loaded: $loadedUrl")
 
                         // Clear navigation history when loading a new view to remove about:blank
-                        // This ensures back button works correctly (no blank page in history)
-                        // Match URLs flexibly to handle hash navigation and redirects
-                        val urlsMatch = loadedUrl == currentUrl ||
-                                       loadedUrl?.startsWith(currentUrl ?: "") == true ||
-                                       loadedUrl?.substringBefore("#")?.substringBefore("?") ==
-                                       currentUrl?.substringBefore("#")?.substringBefore("?")
-
-                        if (urlsMatch && isFirstViewLoad) {
+                        if (isFirstViewLoad) {
                             logger.info("New view loaded, clearing navigation history")
                             try {
                                 view?.clearHistory()
