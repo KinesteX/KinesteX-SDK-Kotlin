@@ -99,6 +99,11 @@ object UrlHelper {
 
     fun cameraView(style: IStyle): String = appendStyleParams("$BASE_URL/camera", style)
 
+    fun customComponentView(route: String, style: IStyle): String {
+        val encoded = Uri.encode(route)
+        return appendStyleParams("$BASE_URL/$encoded", style)
+    }
+
     /**
      * Converts ContentType enum to URL segment string
      */
