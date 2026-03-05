@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.google.gson.Gson
+import com.kinestex.kinestexsdkkotlin.api.EquipmentModel
 import com.kinestex.kinestexsdkkotlin.api.WorkoutModel
 import com.kinestex.kinestexsdkkotlin.api.PlanModel
 import com.kinestex.kinestexsdkkotlin.api.ExerciseModel
@@ -115,6 +116,16 @@ fun WorkoutDetailScreen(workout: WorkoutModel, onBack: () -> Unit) {
                 Text("Targeted Body Parts", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(Modifier.height(8.dp))
                 BodyPartsWrap(bodyParts = workout.body_parts)
+
+                if (workout.equipment.isNotEmpty()) {
+                    Spacer(Modifier.height(24.dp))
+                    Text("Equipment (${workout.equipment.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(Modifier.height(8.dp))
+                    workout.equipment.forEach { item ->
+                        EquipmentCard(equipment = item)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
 
                 Spacer(Modifier.height(24.dp))
 
@@ -280,6 +291,16 @@ fun ExerciseDetailScreen(exercise: ExerciseModel, onBack: () -> Unit) {
                 Text("Body Parts", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(Modifier.height(8.dp))
                 BodyPartsWrap(bodyParts = exercise.body_parts)
+
+                if (exercise.equipment.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    Text("Equipment (${exercise.equipment.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(Modifier.height(8.dp))
+                    exercise.equipment.forEach { item ->
+                        EquipmentCard(equipment = item)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
 
                 Spacer(Modifier.height(16.dp))
 
@@ -458,6 +479,46 @@ fun ExerciseSequenceCard(exercise: ExerciseModel, index: Int) {
                 Spacer(Modifier.height(8.dp))
                 Text("Common Mistakes:", fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F))
                 Text(exercise.common_mistakes, fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun EquipmentCard(equipment: EquipmentModel) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (equipment.thumbnail_url.isNotEmpty()) {
+                AsyncImage(
+                    model = equipment.thumbnail_url,
+                    contentDescription = equipment.title,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(equipment.title, fontWeight = FontWeight.SemiBold)
+                if (equipment.description.isNotEmpty()) {
+                    Text(equipment.description, fontSize = 12.sp, color = Color.Gray, maxLines = 2)
+                }
+                if (equipment.home_alternative.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Home alternative: ${equipment.home_alternative}",
+                        fontSize = 12.sp,
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

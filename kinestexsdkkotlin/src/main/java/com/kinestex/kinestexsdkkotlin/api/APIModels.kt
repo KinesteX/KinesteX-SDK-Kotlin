@@ -56,6 +56,14 @@ enum class BodyPart(val value: String) {
 
 
 
+data class EquipmentModel(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val home_alternative: String,
+    val thumbnail_url: String
+)
+
 // Models
 data class WorkoutModel(
     val id: String,
@@ -67,6 +75,7 @@ data class WorkoutModel(
     val total_calories: Int?,
     val body_parts: List<String>,
     val dif_level: String?,
+    val equipment: List<EquipmentModel>,
     val sequence: List<ExerciseModel>
 )
 
@@ -82,6 +91,7 @@ data class ExerciseModel(
     val rest_duration: Int?,
     val avg_cal: Double?,
     val body_parts: List<String>,
+    val equipment: List<EquipmentModel>,
     val description: String,
     val dif_level: String,
     val common_mistakes: String,
@@ -146,7 +156,16 @@ private data class RawWorkoutData(
     val description: String,
     val dif_level: String?,
     val body_parts: List<String>,
+    val equipment: List<RawEquipmentItem>?,
     val sequence: List<RawSequenceItem>
+)
+
+private data class RawEquipmentItem(
+    val id: Int?,
+    val title: String?,
+    val description: String?,
+    val home_alternative: String?,
+    val thumbnail_url: String?
 )
 
 private data class RawSequenceItem(
@@ -159,6 +178,7 @@ private data class RawSequenceItem(
     val thumbnail_URL: String?,
     val calories: Double?,
     val body_parts: List<String>?,
+    val equipment: List<RawEquipmentItem>?,
     val dif_level: String?,
     val description: String?,
     val steps: List<String?>?,
@@ -209,6 +229,7 @@ object DataProcessor {
                     total_calories = rawWorkout.calories,
                     body_parts = rawWorkout.body_parts,
                     dif_level = rawWorkout.dif_level,
+                    equipment = processEquipment(rawWorkout.equipment),
                     sequence = processSequence(rawWorkout.sequence)
                 )
             }
@@ -237,6 +258,7 @@ object DataProcessor {
                     rest_duration = 10,
                     avg_cal = item.calories,
                     body_parts = item.body_parts ?: emptyList(),
+                    equipment = processEquipment(item.equipment),
                     description = item.description ?: "Missing exercise description",
                     dif_level = item.dif_level ?: "Medium",
                     common_mistakes = item.common_mistakes ?: "",
@@ -277,6 +299,7 @@ object DataProcessor {
                 total_calories = rawWorkout.calories,
                 body_parts = rawWorkout.body_parts,
                 dif_level = rawWorkout.dif_level,
+                equipment = processEquipment(rawWorkout.equipment),
                 sequence = processSequence(rawWorkout.sequence)
             )
         } catch (e: JsonSyntaxException) {
@@ -301,6 +324,7 @@ object DataProcessor {
                 rest_duration = 10,
                 avg_cal = item.calories,
                 body_parts = item.body_parts ?: emptyList(),
+                equipment = processEquipment(item.equipment),
                 description = item.description ?: "Missing exercise description",
                 dif_level = item.dif_level ?: "Medium",
                 common_mistakes = item.common_mistakes ?: "",
@@ -332,6 +356,7 @@ object DataProcessor {
                     rest_duration = currentRestDuration,
                     avg_cal = item.calories,
                     body_parts = item.body_parts ?: emptyList(),
+                    equipment = processEquipment(item.equipment),
                     description = item.description ?: "Missing exercise description",
                     dif_level = item.dif_level ?: "Medium",
                     common_mistakes = item.common_mistakes ?: "",
@@ -340,6 +365,19 @@ object DataProcessor {
                 ).also { currentRestDuration = 0 }
             }
         }
+    }
+
+    private fun processEquipment(equipment: List<RawEquipmentItem>?): List<EquipmentModel> {
+        return equipment?.mapNotNull { item ->
+            val title = item.title ?: return@mapNotNull null
+            EquipmentModel(
+                id = item.id ?: 0,
+                title = title,
+                description = item.description ?: "",
+                home_alternative = item.home_alternative ?: "",
+                thumbnail_url = item.thumbnail_url ?: ""
+            )
+        } ?: emptyList()
     }
 
     private fun processSteps(steps: List<String?>?): List<String> {

@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew :kinestexsdkkotlin:compileDebugKotlin)"
+      "Bash(./gradlew :kinestexsdkkotlin:compileDebugKotlin)",
+      "Bash(curl -s \"https://admin.kinestex.com/api/v1/workouts?lang=en&category=Strength&limit=1&equipment=Dumbbells\" -H \"x-api-key: test\" -H \"x-company-name: test\" -H \"Content-Type: application/json\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s \"https://admin.kinestex.com/api/v1/workouts?lang=en&category=Cardio&limit=1\" -H \"x-api-key: pBnYyDq9nMuwEuu2ZexFzK7TiJs0B27t\" -H \"x-company-name: VladimirTesting\" -H \"Content-Type: application/json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); w=d[''workouts''][0]; print\\(''equipment:'', json.dumps\\(w.get\\(''equipment'', ''MISSING''\\), indent=2\\)\\)\")",
+      "Bash(curl -s \"https://admin.kinestex.com/api/v1/workouts/Fitness%20Lite?lang=en\" -H \"x-api-key: pBnYyDq9nMuwEuu2ZexFzK7TiJs0B27t\" -H \"x-company-name: VladimirTesting\" -H \"Content-Type: application/json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''equipment:'', json.dumps\\(d.get\\(''equipment'', ''MISSING''\\), indent=2\\)\\)\")",
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(curl -s \"https://admin.kinestex.com/api/v1/exercises?lang=en&body_parts=Biceps&limit=1\" -H \"x-api-key: pBnYyDq9nMuwEuu2ZexFzK7TiJs0B27t\" -H \"x-company-name: VladimirTesting\" -H \"Content-Type: application/json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); e=d[''exercises''][0]; print\\(''keys:'', list\\(e.keys\\(\\)\\)\\); print\\(''equipment:'', json.dumps\\(e.get\\(''equipment'', ''NOT_PRESENT''\\), indent=2\\)\\)\")",
+      "Bash(curl -s \"https://admin.kinestex.com/api/v1/exercises/77?lang=en\" -H \"x-api-key: pBnYyDq9nMuwEuu2ZexFzK7TiJs0B27t\" -H \"x-company-name: VladimirTesting\" -H \"Content-Type: application/json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''equipment:'', json.dumps\\(d.get\\(''equipment'', ''NOT_PRESENT''\\), indent=2\\)\\)\")"
     ]
   }
 }
