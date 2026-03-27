@@ -40,6 +40,10 @@
         </activity>
 
         <activity
+            android:name=".NativeHeaderExampleActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ContentActivity"
             android:exported="false" />
 

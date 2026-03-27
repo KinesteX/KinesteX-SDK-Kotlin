@@ -803,6 +803,15 @@ class KinesteXSDK {
 
 
         /**
+         * Returns the underlying WebView instance managed by the SDK.
+         *
+         * Useful for injecting custom CSS/JS (e.g., native header overlays on the statistics page).
+         *
+         * @return The WebView instance, or null if not yet created
+         */
+        fun getWebView(): WebView? = KinesteXWebViewController.getInstance().getWebView()
+
+        /**
          * Updates the current exercise in the camera component.
          *
          * Uses the singleton WebView controller to update the exercise dynamically.

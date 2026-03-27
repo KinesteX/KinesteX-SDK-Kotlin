@@ -158,6 +158,9 @@ class MainActivity : AppCompatActivity(), PermissionHandler {
             btnApiRequest.setOnClickListener {
                 startActivity(Intent(this@MainActivity, ContentActivity::class.java))
             }
+            btnNativeHeader.setOnClickListener {
+                startActivity(Intent(this@MainActivity, NativeHeaderExampleActivity::class.java))
+            }
 
         }
     }

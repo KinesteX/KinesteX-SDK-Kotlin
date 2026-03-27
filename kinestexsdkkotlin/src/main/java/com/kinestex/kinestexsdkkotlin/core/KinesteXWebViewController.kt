@@ -554,6 +554,7 @@ class KinesteXWebViewController private constructor() {
                     "workout_completed" -> WebViewMessage.WorkoutCompleted(dataMap)
                     "all_resources_loaded" -> WebViewMessage.AllResourcesLoaded(dataMap)
                     "workout_exit_request" -> WebViewMessage.WorkoutExitRequest(dataMap)
+                    "workout_completion_overlay_dismissed" -> WebViewMessage.WorkoutCompletionOverlayDismissed(dataMap)
                     else -> WebViewMessage.CustomType(dataMap)
                 }
 

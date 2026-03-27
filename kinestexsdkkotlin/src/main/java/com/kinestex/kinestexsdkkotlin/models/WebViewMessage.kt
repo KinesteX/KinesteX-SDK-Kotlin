@@ -69,4 +69,7 @@ sealed class WebViewMessage {
     /** Sent when a custom workout exit requested */
     data class WorkoutExitRequest(val data: Map<String, Any>) : WebViewMessage()
 
+    /** Sent when the workout completion overlay is dismissed (statistics page shown) */
+    data class WorkoutCompletionOverlayDismissed(val data: Map<String, Any>) : WebViewMessage()
+
 }
