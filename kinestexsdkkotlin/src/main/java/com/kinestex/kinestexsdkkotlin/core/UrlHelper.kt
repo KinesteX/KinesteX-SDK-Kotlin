@@ -38,6 +38,7 @@ object UrlHelper {
     }
 
     fun challengeView(style: IStyle): String = appendStyleParams("$BASE_URL/challenge", style)
+    fun trainerChatView(style: IStyle): String = appendStyleParams("$BASE_URL/trainer", style)
 
     fun leaderboardView(username: String = "", style: IStyle): String {
         val baseUrl = if (username.isNotEmpty()) {

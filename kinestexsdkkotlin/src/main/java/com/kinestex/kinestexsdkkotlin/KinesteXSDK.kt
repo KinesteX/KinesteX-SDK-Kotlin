@@ -593,6 +593,50 @@ class KinesteXSDK {
             ) as? WebView
         }
 
+           /**
+         * Creates a trainer chat view
+         *
+         * @param context Activity or Fragment context
+         * @param user Optional user details
+         * @param style Optional styling configuration
+         * @param customParams Optional custom parameters
+         * @param isLoading Loading state flow
+         * @param onMessageReceived Callback for WebView messages
+         * @param permissionHandler Handler for permissions
+         * @return WebView instance or null on error
+         * @throws IllegalStateException if SDK not initialized
+         */
+        fun createTrainerChatView(
+            context: Context,
+            user: UserDetails? = null,
+            style: IStyle? = null,
+            customParams: Map<String, Any> = emptyMap(),
+            isLoading: MutableStateFlow<Boolean>,
+            onMessageReceived: (WebViewMessage) -> Unit,
+            permissionHandler: PermissionHandler
+        ): WebView? {
+            if (!isInitialized()) {
+                throw IllegalStateException("SDK not initialized. Call KinesteXSDK.initialize() first.")
+            }
+
+            val credentials = credentials.get()
+
+            return KinesteXViewBuilder.build(
+                context = context,
+                apiKey = credentials.apiKey,
+                companyName = credentials.companyName,
+                userId = credentials.userId,
+                url = UrlHelper.trainerChatView(style ?: IStyle()),
+                style = style,
+                data = emptyMap(),
+                user = user,
+                customParams = customParams,
+                isLoading = isLoading,
+                permissionHandler = permissionHandler,
+                onMessageReceived = onMessageReceived
+            ) as? WebView
+        }
+
         /**
          * Creates a camera component for custom exercise tracking
          *
