@@ -99,6 +99,12 @@ class KinesteXAPI(
      * @param lastDocId Optional last document ID for pagination
      * @param limit Optional limit for number of results
      * @param bodyParts Optional list of body parts to filter by
+     * @param includeKinestex Optionally controls whether KinesteX-owned content is included
+     *   by sending `include_kinestex=true|false`. When null, the parameter is omitted and the
+     *   server default applies.
+     * @param customParams Optional arbitrary query parameters appended to the request, allowing
+     *   a company to apply its own custom filtering on top of the standard parameters. Keys and
+     *   values are validated for disallowed characters.
      * @return Result containing either the requested content or an error message
      */
     suspend fun fetchAPIContentData(
@@ -109,7 +115,9 @@ class KinesteXAPI(
         category: String? = null,
         lastDocId: String? = null,
         limit: Int? = null,
-        bodyParts: List<BodyPart>? = null
+        bodyParts: List<BodyPart>? = null,
+        includeKinestex: Boolean? = null,
+        customParams: Map<String, String>? = null
     ): APIContentResult = withContext(Dispatchers.IO) {
             // Validation checks
             if (containsDisallowedCharacters(apiKey) ||
@@ -142,6 +150,14 @@ class KinesteXAPI(
                 }
             }
 
+            if (customParams != null) {
+                for ((key, value) in customParams) {
+                    if (containsDisallowedCharacters(key) || containsDisallowedCharacters(value)) {
+                        return@withContext APIContentResult.Error("⚠️ Error: Custom parameter '$key' contains disallowed characters")
+                    }
+                }
+            }
+
             // Determine endpoint
             val endpoint = when (contentType) {
                 ContentType.WORKOUT -> "workouts"
@@ -163,6 +179,8 @@ class KinesteXAPI(
                     val bodyPartsString = it.joinToString(",") { part -> part.value }
                     appendQueryParameter("body_parts", bodyPartsString)
                 }
+                includeKinestex?.let { appendQueryParameter("include_kinestex", it.toString()) }
+                customParams?.forEach { (key, value) -> appendQueryParameter(key, value) }
             }.build().toString()
 
             logger.debug("Fetching content: $contentType from $url")
@@ -177,7 +195,7 @@ class KinesteXAPI(
 
                     if (response.isSuccessful && responseBody != null) {
                         try {
-                            if (category != null || bodyParts != null || lastDocId != null) {
+                            if (category != null || bodyParts != null || lastDocId != null || customParams != null) {
                                 // Handle array responses
                                 when (contentType) {
                                     ContentType.WORKOUT -> {
