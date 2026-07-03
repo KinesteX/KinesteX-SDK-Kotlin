@@ -10,9 +10,11 @@ import android.view.Gravity
 import android.view.View
 import android.webkit.*
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.kinestex.kinestexsdkkotlin.PermissionHandler
+import com.kinestex.kinestexsdkkotlin.R
 import com.kinestex.kinestexsdkkotlin.models.WebViewMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONArray
@@ -75,7 +77,7 @@ class GenericWebView(
             get() = controller.isWarmedUp()
     }
 
-    private val overlayView: View = View(context).apply {
+    private val overlayView: FrameLayout = FrameLayout(context).apply {
         setBackgroundColor(overlayColor)
         layoutParams = LayoutParams(
             LayoutParams.MATCH_PARENT,
@@ -116,8 +118,23 @@ class GenericWebView(
                 )
             )
         }
+        overlayView.addView(buildBackButton())
         addView(overlayView)
         addView(retryView)
+    }
+
+    private fun buildBackButton(): ImageView = ImageView(context).apply {
+        setImageResource(R.drawable.ic_arrow_left)
+        setColorFilter(foregroundColor)
+        scaleType = ImageView.ScaleType.FIT_CENTER
+        val pad = dp(10)
+        setPadding(pad, pad, pad, pad)
+        layoutParams = FrameLayout.LayoutParams(dp(40), dp(40)).apply {
+            gravity = Gravity.TOP or Gravity.START
+            leftMargin = dp(16)
+            topMargin = dp(16)
+        }
+        setOnClickListener { exit() }
     }
 
     // Load the view using the singleton controller.
@@ -214,18 +231,7 @@ class GenericWebView(
             visibility = View.GONE
         }
 
-        val backButton = TextView(context).apply {
-            text = "←"
-            setTextColor(foregroundColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
-            val pad = dp(26)
-            setPadding(pad, pad, pad, pad)
-            layoutParams = FrameLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-            ).apply { gravity = Gravity.TOP or Gravity.START }
-            setOnClickListener { exit() }
-        }
+        val backButton = buildBackButton()
 
         val column = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
