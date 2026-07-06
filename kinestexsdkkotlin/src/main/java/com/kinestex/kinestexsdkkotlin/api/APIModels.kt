@@ -16,17 +16,17 @@ sealed class APIContentResult {
 
 data class WorkoutsResponse(
     val workouts: List<WorkoutModel>,
-    val lastDocId: String
+    val lastDocId: String?
 )
 
 data class ExerciseResponse(
     val exercises: List<ExerciseModel>,
-    val lastDocId: String
+    val lastDocId: String?
 )
 
 data class PlansResponse(
     val plans: List<PlanModel>,
-    val lastDocId: String
+    val lastDocId: String?
 )
 
 enum class BodyPart(val value: String) {
@@ -190,12 +190,12 @@ private data class RawSequenceItem(
 
 private data class WorkoutsResponseRaw(
     val workouts: List<RawWorkoutData>,
-    val lastDocId: String
+    val lastDocId: String?
 )
 
 private data class ExerciseResponseRaw(
     val exercises: List<RawSequenceItem>,
-    val lastDocId: String
+    val lastDocId: String?
 )
 
 // Data processing utility object
