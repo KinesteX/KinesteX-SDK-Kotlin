@@ -246,11 +246,11 @@ class GenericWebView(
             setOnClickListener { loadView() }
         }
 
-        val refreshIcon = TextView(context).apply {
-            text = "↻"
-            setTextColor(foregroundColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 48f)
-            gravity = Gravity.CENTER
+        val refreshIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_refresh)
+            setColorFilter(foregroundColor)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            layoutParams = LinearLayout.LayoutParams(dp(42), dp(42))
         }
 
         val messageView = TextView(context).apply {
