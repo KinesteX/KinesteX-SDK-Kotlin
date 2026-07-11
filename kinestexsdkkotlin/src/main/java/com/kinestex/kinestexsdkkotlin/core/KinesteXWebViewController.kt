@@ -151,14 +151,7 @@ class KinesteXWebViewController private constructor() {
     private fun navigateToUrl(url: String) {
         try {
             logger.info("Navigating to: $url")
-
-            // Clear previous content to prevent showing old URL during transition
-            webView?.loadUrl("about:blank")
-
-            // Load the target URL after a brief delay to ensure blank page is loaded
-            Handler(Looper.getMainLooper()).postDelayed({
-                webView?.loadUrl(url)
-            }, 50)
+            webView?.loadUrl(url)
         } catch (e: Exception) {
             logger.error("Navigation failed", e)
             isLoading?.value = false
@@ -208,7 +201,7 @@ class KinesteXWebViewController private constructor() {
                     } else if (loadedUrl != "about:blank") {
                         logger.info("Page loaded: $loadedUrl")
 
-                        // Clear navigation history when loading a new view to remove about:blank
+                        // Clear navigation history when loading a new view
                         if (isFirstViewLoad) {
                             logger.info("New view loaded, clearing navigation history")
                             try {
