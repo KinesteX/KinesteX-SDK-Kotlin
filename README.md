@@ -1,25 +1,7 @@
 # [Precise Motion Tracking and Analysis SDK](https://kinestex.com)
 #### Stay Ahead with KinesteX AI Motion Tracking and Analysis.
 
-## 🎉 v2.0 Now Available!
-
-The latest version introduces a modern initialization pattern with better performance and developer experience. [**See Migration Guide →**](MIGRATION-GUIDE-V2.md)
-
-**What's New:**
-- ✅ Initialize once, use everywhere - no more credential repetition
-- ✅ WebView warmup for faster first load
-- ✅ Memory leak prevention with proper lifecycle management
-- ✅ Enhanced API client with automatic header injection
-
-# **Jump to:**
-
-1. ### **🚀 [Quick Start](docs/getting-started.md)**
-2. ### **📱 [Integration Options](docs/integration/overview.md)**
-3. ### **📋 [Data points](docs/data.md)**
-4. ### **💡 [Examples](docs/examples/code-samples.md)**
-5. ### **🔄 [Migration Guide (v1.x → v2.0)](MIGRATION-GUIDE-V2.md)**
-6. ### **📧 [Contact us](#need-help)**
-
+# [Documentation](https://www.kinestex.com/docs/getting-started)
 ---
 
 ### What is KinesteX?
