@@ -120,6 +120,11 @@ class KinesteXAPI(
         includeKinestex: Boolean? = null,
         customParams: Map<String, String>? = null
     ): APIContentResult = withContext(Dispatchers.IO) {
+            // The content API has no session-auth path — fail fast with a clear
+            // message instead of a bare 401 when the SDK was initialized key-less.
+            if (apiKey == null) {
+                return@withContext APIContentResult.Error("⚠️ The content API requires an apiKey; session-based auth does not cover it.")
+            }
             // Validation checks
             if ((apiKey != null && containsDisallowedCharacters(apiKey)) ||
                 containsDisallowedCharacters(companyName) ||

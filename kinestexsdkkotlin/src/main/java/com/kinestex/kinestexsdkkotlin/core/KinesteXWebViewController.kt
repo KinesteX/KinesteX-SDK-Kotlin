@@ -81,8 +81,8 @@ class KinesteXWebViewController private constructor() {
 
         logger.info("Starting WebView warmup...")
 
-        // Store credentials if provided
-        if (apiKey != null && companyName != null && userId != null) {
+        // Store credentials if provided (apiKey may be null under session-based auth)
+        if (companyName != null && userId != null) {
             currentApiKey = apiKey
             currentCompanyName = companyName
             currentUserId = userId
@@ -267,7 +267,16 @@ class KinesteXWebViewController private constructor() {
     private fun toJsonValue(value: Any?): Any {
         return when (value) {
             null -> JSONObject.NULL
-            is List<*> -> {
+            // Collection covers List and Set; Array would otherwise fall through to
+            // toString() and send "[Ljava.lang.String;@..." — silent corruption.
+            is Collection<*> -> {
+                JSONArray().apply {
+                    value.forEach { item ->
+                        put(toJsonValue(item))
+                    }
+                }
+            }
+            is Array<*> -> {
                 JSONArray().apply {
                     value.forEach { item ->
                         put(toJsonValue(item))
@@ -299,6 +308,12 @@ class KinesteXWebViewController private constructor() {
 
         logger.info("Loading initial data")
 
+        // Neither a key nor a session means the web's verify gate never opens and the
+        // launch dies as a fake "connection" error — make the misconfiguration loud.
+        if (currentApiKey == null && currentData?.get("session") == null) {
+            logger.error("No apiKey and no \"session\" custom param — the experience cannot authenticate")
+        }
+
         val message = JSONObject().apply {
             currentApiKey?.let { put("key", it) }
             put("company", currentCompanyName)
@@ -319,7 +334,7 @@ class KinesteXWebViewController private constructor() {
                 setTimeout(function() {
                     var event = new MessageEvent('message', {
                         data: $message,
-                        origin: '$currentUrl',
+                        origin: ${JSONObject.quote(currentUrl ?: "")},
                         source: window
                     });
                     window.dispatchEvent(event);
@@ -327,7 +342,8 @@ class KinesteXWebViewController private constructor() {
             })();
         """.trimIndent()
 
-        logger.info("Script: $script")
+        // Never log the script itself — it carries the api key / session token.
+        logger.info("Sending initial data (${message.length()} fields)")
 
         try {
             webView?.evaluateJavascript(script) { result ->
@@ -364,11 +380,14 @@ class KinesteXWebViewController private constructor() {
 
         // IMPORTANT: Run on main thread
         Handler(Looper.getMainLooper()).post {
+            // JSON-built payload and quoted origin — raw interpolation broke on values
+            // containing quotes (e.g. "Child's Pose") and was a JS-injection sink.
+            val payload = JSONObject().put("currentExercise", exercise)
             val script = """
                 (function() {
                     var event = new MessageEvent('message', {
-                        data: { currentExercise: '$exercise' },
-                        origin: '$currentUrl',
+                        data: $payload,
+                        origin: ${JSONObject.quote(currentUrl ?: "")},
                         source: window
                     });
                     window.dispatchEvent(event);
@@ -410,7 +429,7 @@ class KinesteXWebViewController private constructor() {
 
             val script = """
                 (function() {
-                    window.postMessage($messagePayload, '$currentUrl');
+                    window.postMessage($messagePayload, ${JSONObject.quote(currentUrl ?: "")});
                 })();
             """.trimIndent()
 
@@ -445,13 +464,15 @@ class KinesteXWebViewController private constructor() {
 
             val script = """
                 (function() {
-                    window.postMessage($json, '$currentUrl');
+                    window.postMessage($json, ${JSONObject.quote(currentUrl ?: "")});
                 })();
             """.trimIndent()
 
             try {
                 webView?.evaluateJavascript(script) {
-                    logger.info("Message sent successfully")
+                    // evaluateJavascript's callback fires even when the page has no
+                    // listener yet — dispatch is confirmed, delivery is not.
+                    logger.info("Message dispatched")
                 }
             } catch (e: Exception) {
                 logger.error("Failed to send message", e)

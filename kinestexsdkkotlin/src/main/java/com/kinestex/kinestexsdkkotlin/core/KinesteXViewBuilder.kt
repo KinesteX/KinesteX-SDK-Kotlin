@@ -70,7 +70,8 @@ object KinesteXViewBuilder {
         addUserDetails(finalData, user)
         mergeCustomParams(finalData, customParams)
 
-        logger.info("KinesteXViewBuilder: $apiKey - $companyName - $userId")
+        // Never log the key itself.
+        logger.info("KinesteXViewBuilder: company=$companyName user=$userId keyPresent=${apiKey != null}")
 
         // Step 3: Determine overlay color from IStyle
         val overlayColor = when {

@@ -64,6 +64,10 @@ class KinesteXSDK {
         ) {
             logger.info("Initializing KinesteX SDK...")
 
+            if (apiKey == null) {
+                logger.info("No apiKey provided — session-based auth expected (pass \"session\" via a view's customParams)")
+            }
+
             // Initialize using the new architecture
             initializer.initialize(context, apiKey, companyName, userId)
             credentials.set(apiKey, companyName, userId)
