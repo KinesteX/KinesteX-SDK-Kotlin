@@ -18,7 +18,7 @@ import androidx.core.net.toUri
  * @param companyName Company identifier
  */
 class KinesteXAPI(
-    private val apiKey: String,
+    private val apiKey: String?,
     private val companyName: String
 ) {
     private val logger = KinesteXLogger.instance
@@ -48,8 +48,9 @@ class KinesteXAPI(
     private fun createHeaderInterceptor(): Interceptor {
         return Interceptor { chain ->
             val originalRequest = chain.request()
-            val requestWithHeaders = originalRequest.newBuilder()
-                .addHeader("x-api-key", apiKey)
+            val builder = originalRequest.newBuilder()
+            apiKey?.let { builder.addHeader("x-api-key", it) }
+            val requestWithHeaders = builder
                 .addHeader("x-company-name", companyName)
                 .addHeader("Content-Type", "application/json")
                 .build()
@@ -119,8 +120,13 @@ class KinesteXAPI(
         includeKinestex: Boolean? = null,
         customParams: Map<String, String>? = null
     ): APIContentResult = withContext(Dispatchers.IO) {
+            // The content API has no session-auth path — fail fast with a clear
+            // message instead of a bare 401 when the SDK was initialized key-less.
+            if (apiKey == null) {
+                return@withContext APIContentResult.Error("⚠️ The content API requires an apiKey; session-based auth does not cover it.")
+            }
             // Validation checks
-            if (containsDisallowedCharacters(apiKey) ||
+            if ((apiKey != null && containsDisallowedCharacters(apiKey)) ||
                 containsDisallowedCharacters(companyName) ||
                 containsDisallowedCharacters(lang)) {
                 return@withContext APIContentResult.Error("⚠️ Validation Error: apiKey, companyName, or lang contains disallowed characters")

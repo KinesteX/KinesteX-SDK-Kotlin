@@ -50,18 +50,23 @@ class KinesteXSDK {
          * This enables the new credential-free API pattern.
          *
          * @param context Application context
-         * @param apiKey Your KinesteX API key
+         * @param apiKey Your KinesteX API key. Optional: omit it for session-based
+         * auth and pass the session id via a view's customParams (e.g. "session" to "...")
          * @param companyName Your company identifier
          * @param userId Current user identifier
          * @throws IllegalStateException if already initialized
          */
         fun initialize(
             context: Context,
-            apiKey: String,
+            apiKey: String? = null,
             companyName: String,
             userId: String
         ) {
             logger.info("Initializing KinesteX SDK...")
+
+            if (apiKey == null) {
+                logger.info("No apiKey provided — session-based auth expected (pass \"session\" via a view's customParams)")
+            }
 
             // Initialize using the new architecture
             initializer.initialize(context, apiKey, companyName, userId)
@@ -740,12 +745,12 @@ class KinesteXSDK {
                 customQueries = customQueries
             )
 
-            // Build view-specific data
-            val data = mapOf(
+            // Build view-specific data. A missing key is OMITTED, never sent as "".
+            val data = mutableMapOf<String, Any>(
                 "organization" to organization,
-                "apiKey" to credentials.apiKey,
                 "companyName" to credentials.companyName
             )
+            credentials.apiKey?.let { data["apiKey"] = it }
 
             // Delegate to centralized builder
             return KinesteXViewBuilder.build(
@@ -865,6 +870,15 @@ class KinesteXSDK {
          */
         fun updateCurrentExercise(exercise: String) {
             KinesteXWebViewController.getInstance().updateCurrentExercise(exercise)
+        }
+
+        /**
+         * Posts an arbitrary JSON payload into the running KinesteX experience via
+         * window.postMessage — e.g. mapOf("type" to "update_trainer_profile", "age" to 32).
+         * The view must be loaded first.
+         */
+        fun sendMessage(payload: Map<String, Any>) {
+            KinesteXWebViewController.getInstance().sendMessage(payload)
         }
 
         fun normalizeWorkoutExercises(
