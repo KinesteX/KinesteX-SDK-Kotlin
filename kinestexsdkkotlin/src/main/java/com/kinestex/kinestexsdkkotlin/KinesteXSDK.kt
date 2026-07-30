@@ -741,12 +741,12 @@ class KinesteXSDK {
                 customQueries = customQueries
             )
 
-            // Build view-specific data
-            val data = mapOf(
+            // Build view-specific data. A missing key is OMITTED, never sent as "".
+            val data = mutableMapOf<String, Any>(
                 "organization" to organization,
-                "apiKey" to (credentials.apiKey ?: ""),
                 "companyName" to credentials.companyName
             )
+            credentials.apiKey?.let { data["apiKey"] = it }
 
             // Delegate to centralized builder
             return KinesteXViewBuilder.build(
