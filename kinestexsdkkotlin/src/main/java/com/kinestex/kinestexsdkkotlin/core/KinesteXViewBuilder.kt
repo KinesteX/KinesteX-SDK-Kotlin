@@ -46,7 +46,7 @@ object KinesteXViewBuilder {
      */
     fun build(
         context: Context,
-        apiKey: String,
+        apiKey: String?,
         companyName: String,
         userId: String,
         url: String,
@@ -95,11 +95,11 @@ object KinesteXViewBuilder {
     }
 
     private fun validateCoreParams(
-        apiKey: String,
+        apiKey: String?,
         company: String,
         userId: String
     ): Boolean {
-        if (containsDisallowedCharacters(apiKey) ||
+        if ((apiKey != null && containsDisallowedCharacters(apiKey)) ||
             containsDisallowedCharacters(company) ||
             containsDisallowedCharacters(userId)) {
             logger.error("Parameters contain disallowed characters")
@@ -123,15 +123,10 @@ object KinesteXViewBuilder {
         customParams: Map<String, Any>?
     ) {
         customParams?.forEach { (key, value) ->
-            // Validate key
+            // Only keys are validated. Values are JSON-serialized before reaching the
+            // web view, so punctuation in free text (e.g. a greeting) is safely escaped.
             if (containsDisallowedCharacters(key)) {
                 logger.error("Custom parameter key '$key' contains disallowed characters")
-                return@forEach
-            }
-
-            // Validate string values
-            if (value is String && containsDisallowedCharacters(value)) {
-                logger.error("Custom parameter '$key' value contains disallowed characters")
                 return@forEach
             }
 

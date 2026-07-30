@@ -25,7 +25,7 @@ class KinesteXInitializer {
      * @param companyName Company identifier
      * @param userId Current user identifier
      */
-    fun initialize(context: Context, apiKey: String, companyName: String, userId: String) {
+    fun initialize(context: Context, apiKey: String?, companyName: String, userId: String) {
         if (isInitialized) {
             logger.error("KinesteX SDK already initialized")
             return

@@ -18,7 +18,7 @@ import androidx.core.net.toUri
  * @param companyName Company identifier
  */
 class KinesteXAPI(
-    private val apiKey: String,
+    private val apiKey: String?,
     private val companyName: String
 ) {
     private val logger = KinesteXLogger.instance
@@ -48,8 +48,9 @@ class KinesteXAPI(
     private fun createHeaderInterceptor(): Interceptor {
         return Interceptor { chain ->
             val originalRequest = chain.request()
-            val requestWithHeaders = originalRequest.newBuilder()
-                .addHeader("x-api-key", apiKey)
+            val builder = originalRequest.newBuilder()
+            apiKey?.let { builder.addHeader("x-api-key", it) }
+            val requestWithHeaders = builder
                 .addHeader("x-company-name", companyName)
                 .addHeader("Content-Type", "application/json")
                 .build()
@@ -120,7 +121,7 @@ class KinesteXAPI(
         customParams: Map<String, String>? = null
     ): APIContentResult = withContext(Dispatchers.IO) {
             // Validation checks
-            if (containsDisallowedCharacters(apiKey) ||
+            if ((apiKey != null && containsDisallowedCharacters(apiKey)) ||
                 containsDisallowedCharacters(companyName) ||
                 containsDisallowedCharacters(lang)) {
                 return@withContext APIContentResult.Error("⚠️ Validation Error: apiKey, companyName, or lang contains disallowed characters")

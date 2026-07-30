@@ -27,7 +27,7 @@ import java.util.TimeZone
 @SuppressLint("ViewConstructor")
 class GenericWebView(
     context: Context,
-    private val apiKey: String,
+    private val apiKey: String?,
     private val companyName: String,
     private val userId: String,
     private val url: String,
@@ -300,6 +300,13 @@ class GenericWebView(
      */
     fun sendAction(action: String, value: String) {
         controller.sendAction(action, value)
+    }
+
+    /**
+     * Send an arbitrary JSON payload to the running experience
+     */
+    fun sendMessage(payload: Map<String, Any>) {
+        controller.sendMessage(payload)
     }
 
     /**

@@ -50,14 +50,15 @@ class KinesteXSDK {
          * This enables the new credential-free API pattern.
          *
          * @param context Application context
-         * @param apiKey Your KinesteX API key
+         * @param apiKey Your KinesteX API key. Optional: omit it for session-based
+         * auth and pass the session id via a view's customParams (e.g. "session" to "...")
          * @param companyName Your company identifier
          * @param userId Current user identifier
          * @throws IllegalStateException if already initialized
          */
         fun initialize(
             context: Context,
-            apiKey: String,
+            apiKey: String? = null,
             companyName: String,
             userId: String
         ) {
@@ -743,7 +744,7 @@ class KinesteXSDK {
             // Build view-specific data
             val data = mapOf(
                 "organization" to organization,
-                "apiKey" to credentials.apiKey,
+                "apiKey" to (credentials.apiKey ?: ""),
                 "companyName" to credentials.companyName
             )
 
@@ -865,6 +866,15 @@ class KinesteXSDK {
          */
         fun updateCurrentExercise(exercise: String) {
             KinesteXWebViewController.getInstance().updateCurrentExercise(exercise)
+        }
+
+        /**
+         * Posts an arbitrary JSON payload into the running KinesteX experience via
+         * window.postMessage — e.g. mapOf("type" to "update_trainer_profile", "age" to 32).
+         * The view must be loaded first.
+         */
+        fun sendMessage(payload: Map<String, Any>) {
+            KinesteXWebViewController.getInstance().sendMessage(payload)
         }
 
         fun normalizeWorkoutExercises(

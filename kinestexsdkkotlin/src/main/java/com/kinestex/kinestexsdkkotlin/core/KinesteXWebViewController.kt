@@ -108,7 +108,7 @@ class KinesteXWebViewController private constructor() {
      */
     fun loadView(
         context: Context,
-        apiKey: String,
+        apiKey: String?,
         companyName: String,
         userId: String,
         url: String,
@@ -290,7 +290,8 @@ class KinesteXWebViewController private constructor() {
      * Load initial data into the WebView
      */
     private fun loadInitialData() {
-        if (webView == null || currentApiKey == null || currentCompanyName == null ||
+        // apiKey is optional (session-based auth passes a session id via data instead)
+        if (webView == null || currentCompanyName == null ||
             currentUserId == null || currentUrl == null) {
             logger.error("Cannot load initial data - missing required state")
             return
@@ -299,7 +300,7 @@ class KinesteXWebViewController private constructor() {
         logger.info("Loading initial data")
 
         val message = JSONObject().apply {
-            put("key", currentApiKey)
+            currentApiKey?.let { put("key", it) }
             put("company", currentCompanyName)
             put("userId", currentUserId)
             put("exercises", JSONArray(currentData?.get("exercises") as? List<String> ?: emptyList<String>()))
@@ -419,6 +420,41 @@ class KinesteXWebViewController private constructor() {
                 }
             } catch (e: Exception) {
                 logger.error("Failed to send action", e)
+            }
+        }
+    }
+
+    /**
+     * Post an arbitrary JSON payload to the page via window.postMessage —
+     * e.g. mapOf("type" to "update_trainer_profile", "age" to 32).
+     * MUST run on main thread.
+     */
+    fun sendMessage(payload: Map<String, Any>) {
+        if (webView == null || currentUrl == null) {
+            logger.error("Cannot send message - WebView not ready")
+            return
+        }
+
+        if (payload.isEmpty()) {
+            logger.error("Payload is required")
+            return
+        }
+
+        Handler(Looper.getMainLooper()).post {
+            val json = toJsonValue(payload)
+
+            val script = """
+                (function() {
+                    window.postMessage($json, '$currentUrl');
+                })();
+            """.trimIndent()
+
+            try {
+                webView?.evaluateJavascript(script) {
+                    logger.info("Message sent successfully")
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to send message", e)
             }
         }
     }
