@@ -96,7 +96,8 @@ class KinesteXAPI(
      * @param id Optional unique identifier for the content
      * @param title Optional title to search for content
      * @param lang Language for the content (defaults to "en")
-     * @param category Optional category filter
+     * @param category Optional category filter. Null or blank means no filter — all
+     *   categories are returned.
      * @param lastDocId Optional last document ID for pagination
      * @param limit Optional limit for number of results
      * @param bodyParts Optional list of body parts to filter by
@@ -144,7 +145,11 @@ class KinesteXAPI(
                 }
             }
 
-            category?.let {
+            // A blank category means "no filter" — never send it to the API, where a
+            // whitespace-only value would match nothing.
+            val categoryFilter = category?.takeIf { it.isNotBlank() }
+
+            categoryFilter?.let {
                 if (containsDisallowedCharacters(it)) {
                     return@withContext APIContentResult.Error("⚠️ Error: Category contains disallowed characters")
                 }
@@ -178,7 +183,7 @@ class KinesteXAPI(
 
             val url = urlBuilder.toString().toUri().buildUpon().apply {
                 appendQueryParameter("lang", lang)
-                category?.let { appendQueryParameter("category", it) }
+                categoryFilter?.let { appendQueryParameter("category", it) }
                 lastDocId?.let { appendQueryParameter("lastDocId", it) }
                 limit?.let { appendQueryParameter("limit", it.toString()) }
                 bodyParts?.let {
@@ -201,7 +206,10 @@ class KinesteXAPI(
 
                     if (response.isSuccessful && responseBody != null) {
                         try {
-                            if (category != null || bodyParts != null || lastDocId != null || customParams != null) {
+                            // A request without an id or title is a list request — the API
+                            // returns {workouts: [...], lastDocId} regardless of which
+                            // filters (if any) were applied.
+                            if (id == null && title == null) {
                                 // Handle array responses
                                 when (contentType) {
                                     ContentType.WORKOUT -> {
