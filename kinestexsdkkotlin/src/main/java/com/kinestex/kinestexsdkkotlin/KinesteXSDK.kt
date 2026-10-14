@@ -54,19 +54,37 @@ class KinesteXSDK {
          * auth and pass the session id via a view's customParams (e.g. "session" to "...")
          * @param companyName Your company identifier
          * @param userId Current user identifier
+         * @param baseUrl Optional host of the KinesteX app loaded by every view, for regional
+         * deployments (e.g. "https://ksa-ai.kinestex.com"). Defaults to "https://ai.kinestex.com"
+         * @param apiBaseUrl Optional Content API base used by [api], for regional deployments
+         * (e.g. "https://ksa-admin.kinestex.com/api/v1/"). Its origin also serves the admin editor
+         * ([createAdminWorkoutEditor]). Defaults to "https://admin.kinestex.com/api/v1/"
          * @throws IllegalStateException if already initialized
+         * @throws IllegalArgumentException if baseUrl or apiBaseUrl is not an https URL with a host
          */
         fun initialize(
             context: Context,
             apiKey: String? = null,
             companyName: String,
-            userId: String
+            userId: String,
+            baseUrl: String? = null,
+            apiBaseUrl: String? = null
         ) {
             logger.info("Initializing KinesteX SDK...")
 
             if (apiKey == null) {
                 logger.info("No apiKey provided — session-based auth expected (pass \"session\" via a view's customParams)")
             }
+
+            val appUrl = baseUrl?.let { UrlHelper.requireHttpsUrl(it, "baseUrl") }
+                ?: UrlHelper.DEFAULT_BASE_URL
+            val contentApiUrl = apiBaseUrl?.let { UrlHelper.requireHttpsUrl(it, "apiBaseUrl") + "/" }
+                ?: KinesteXAPI.DEFAULT_BASE_API_URL
+
+            // Set before warmup so the warmup page and every view load from these hosts.
+            // The admin dashboard serves the Content API, so the admin editor shares its origin.
+            UrlHelper.appBaseUrl = appUrl
+            UrlHelper.adminBaseUrl = UrlHelper.originOf(contentApiUrl)
 
             // Initialize using the new architecture
             initializer.initialize(context, apiKey, companyName, userId)
@@ -75,7 +93,8 @@ class KinesteXSDK {
             // Create API service instance
             apiService = KinesteXAPI(
                 apiKey = apiKey,
-                companyName = companyName
+                companyName = companyName,
+                baseApiUrl = contentApiUrl
             )
 
             logger.success("KinesteX SDK initialized successfully")

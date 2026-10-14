@@ -73,6 +73,23 @@ Register your custom Application class in `AndroidManifest.xml`:
 
 **Note:** This initialization is required for v2.0 APIs. If you're still using v1.x code patterns, initialization is optional but recommended for better performance (WebView warmup).
 
+#### Regional deployments
+
+If your company runs on a regional KinesteX deployment, pass its hosts to `initialize`. Every view and the warmup page then load from `baseUrl`, `KinesteXSDK.api` calls go to `apiBaseUrl`, and the admin editor opens on the `apiBaseUrl` host. For the Saudi Arabia (Dammam) deployment:
+
+```kotlin
+KinesteXSDK.initialize(
+    context = this,
+    apiKey = "your-api-key",
+    companyName = "your-company",
+    userId = "unique-user-id",
+    baseUrl = "https://ksa-ai.kinestex.com",
+    apiBaseUrl = "https://ksa-admin.kinestex.com/api/v1/"
+)
+```
+
+Leave both out to use the default deployment. A value that is not an `https://` URL with a host throws `IllegalArgumentException`.
+
 ### 4. Request camera permission from app level:
 
 Before a user starts a workout, we need to get access to camera **(if your app doesn't have access to camera already)**.
