@@ -29,7 +29,6 @@ class KinesteXWebViewController private constructor() {
             }
         }
 
-        private const val WARMUP_URL = "https://ai.kinestex.com/warmup"
         private const val MAX_RETRIES = 3
     }
 
@@ -37,6 +36,7 @@ class KinesteXWebViewController private constructor() {
     private var webView: WebView? = null
     private var isInitialized = false
     private var isFirstViewLoad = true
+    private var warmupUrl = UrlHelper.warmupUrl()
 
     // Current state
     private var currentContext: WeakReference<Context>? = null
@@ -81,12 +81,15 @@ class KinesteXWebViewController private constructor() {
 
         logger.info("Starting WebView warmup...")
 
+        // Read at warmup time: initialize() sets the app host just before warming up.
+        warmupUrl = UrlHelper.warmupUrl()
+
         // Store credentials if provided (apiKey may be null under session-based auth)
         if (companyName != null && userId != null) {
             currentApiKey = apiKey
             currentCompanyName = companyName
             currentUserId = userId
-            currentUrl = WARMUP_URL
+            currentUrl = warmupUrl
             logger.info("Credentials stored during warmup")
         }
 
@@ -95,7 +98,7 @@ class KinesteXWebViewController private constructor() {
         // Create WebView
         webView = WebView(context.applicationContext).apply {
             setupWebView(this)
-            loadUrl(WARMUP_URL)
+            loadUrl(warmupUrl)
         }
 
         isInitialized = true
@@ -191,10 +194,10 @@ class KinesteXWebViewController private constructor() {
                     val loadedUrl = url
 
                     // If this was the warmup load
-                    if (loadedUrl == WARMUP_URL) {
+                    if (loadedUrl == warmupUrl) {
                         logger.success("Warmup page loaded")
                         // If we have a different target URL, navigate to it
-                        if (currentUrl != null && currentUrl != WARMUP_URL) {
+                        if (currentUrl != null && currentUrl != warmupUrl) {
                             logger.info("Navigating to target URL: $currentUrl")
                             navigateToUrl(currentUrl!!)
                         }

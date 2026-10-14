@@ -54,19 +54,33 @@ class KinesteXSDK {
          * auth and pass the session id via a view's customParams (e.g. "session" to "...")
          * @param companyName Your company identifier
          * @param userId Current user identifier
+         * @param baseUrl Optional host of the KinesteX app loaded by every view, for regional
+         * deployments (e.g. "https://ksa-ai.kinestex.com"). Defaults to "https://ai.kinestex.com"
+         * @param apiBaseUrl Optional Content API base used by [api], for regional deployments
+         * (e.g. "https://ksa-admin.kinestex.com/api/v1/"). Defaults to "https://admin.kinestex.com/api/v1/"
          * @throws IllegalStateException if already initialized
+         * @throws IllegalArgumentException if baseUrl or apiBaseUrl is not an https URL
          */
         fun initialize(
             context: Context,
             apiKey: String? = null,
             companyName: String,
-            userId: String
+            userId: String,
+            baseUrl: String? = null,
+            apiBaseUrl: String? = null
         ) {
             logger.info("Initializing KinesteX SDK...")
 
             if (apiKey == null) {
                 logger.info("No apiKey provided — session-based auth expected (pass \"session\" via a view's customParams)")
             }
+
+            val appUrl = httpsUrlOrNull(baseUrl, "baseUrl") ?: UrlHelper.DEFAULT_BASE_URL
+            val contentApiUrl = httpsUrlOrNull(apiBaseUrl, "apiBaseUrl")?.let { "$it/" }
+                ?: KinesteXAPI.DEFAULT_BASE_API_URL
+
+            // Set before warmup so the warmup page and every view load from this host.
+            UrlHelper.appBaseUrl = appUrl
 
             // Initialize using the new architecture
             initializer.initialize(context, apiKey, companyName, userId)
@@ -75,10 +89,22 @@ class KinesteXSDK {
             // Create API service instance
             apiService = KinesteXAPI(
                 apiKey = apiKey,
-                companyName = companyName
+                companyName = companyName,
+                baseApiUrl = contentApiUrl
             )
 
             logger.success("KinesteX SDK initialized successfully")
+        }
+
+        // Fails loudly on a malformed URL: falling back to the default host would send a
+        // regional tenant's traffic and data to another region.
+        private fun httpsUrlOrNull(value: String?, name: String): String? {
+            if (value == null) return null
+            val url = value.trim().trimEnd('/')
+            require(url.startsWith("https://") && url.length > "https://".length) {
+                "KinesteXSDK.initialize: $name must be an https URL, got \"$value\""
+            }
+            return url
         }
 
         /**

@@ -16,15 +16,17 @@ import androidx.core.net.toUri
  *
  * @param apiKey API key for authentication
  * @param companyName Company identifier
+ * @param baseApiUrl Content API base URL, ending in "/"
  */
 class KinesteXAPI(
     private val apiKey: String?,
-    private val companyName: String
+    private val companyName: String,
+    private val baseApiUrl: String = DEFAULT_BASE_API_URL
 ) {
     private val logger = KinesteXLogger.instance
 
     companion object {
-        private const val BASE_API_URL = "https://admin.kinestex.com/api/v1/"
+        internal const val DEFAULT_BASE_API_URL = "https://admin.kinestex.com/api/v1/"
         private const val TIMEOUT_SECONDS = 30L
     }
 
@@ -177,7 +179,7 @@ class KinesteXAPI(
             }
 
             // Construct URL
-            val urlBuilder = StringBuilder(BASE_API_URL).append(endpoint)
+            val urlBuilder = StringBuilder(baseApiUrl).append(endpoint)
             id?.let { urlBuilder.append("/$it") }
             title?.let { urlBuilder.append("/$it") }
 

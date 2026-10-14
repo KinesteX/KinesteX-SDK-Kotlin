@@ -7,8 +7,17 @@ import com.kinestex.kinestexsdkkotlin.models.IStyle
 import androidx.core.net.toUri
 
 object UrlHelper {
-    private const val BASE_URL = "https://ai.kinestex.com"
+    internal const val DEFAULT_BASE_URL = "https://ai.kinestex.com"
     private const val ADMIN_BASE_URL = "https://admin.kinestex.com"
+
+    /**
+     * App host for every view and the warmup page. Set by [com.kinestex.kinestexsdkkotlin.KinesteXSDK.initialize];
+     * regional deployments (e.g. KSA) serve the app from their own host.
+     */
+    @Volatile
+    internal var appBaseUrl: String = DEFAULT_BASE_URL
+
+    internal fun warmupUrl(): String = "$appBaseUrl/warmup"
 
     /**
      * Appends style query parameters to a base URL
@@ -25,38 +34,38 @@ object UrlHelper {
         return uri.build().toString()
     }
 
-    fun mainView(style: IStyle): String = appendStyleParams(BASE_URL, style)
+    fun mainView(style: IStyle): String = appendStyleParams(appBaseUrl, style)
 
     fun planView(planName: String, style: IStyle): String {
         val encoded = Uri.encode(planName)
-        return appendStyleParams("$BASE_URL/plan/$encoded", style)
+        return appendStyleParams("$appBaseUrl/plan/$encoded", style)
     }
 
     fun workoutView(workoutName: String, style: IStyle): String {
         val encoded = Uri.encode(workoutName)
-        return appendStyleParams("$BASE_URL/workout/$encoded", style)
+        return appendStyleParams("$appBaseUrl/workout/$encoded", style)
     }
 
-    fun challengeView(style: IStyle): String = appendStyleParams("$BASE_URL/challenge", style)
-    fun trainerChatView(style: IStyle): String = appendStyleParams("$BASE_URL/trainer", style)
+    fun challengeView(style: IStyle): String = appendStyleParams("$appBaseUrl/challenge", style)
+    fun trainerChatView(style: IStyle): String = appendStyleParams("$appBaseUrl/trainer", style)
 
     fun leaderboardView(username: String = "", style: IStyle): String {
         val baseUrl = if (username.isNotEmpty()) {
-            "$BASE_URL/leaderboard?username=$username"
+            "$appBaseUrl/leaderboard?username=$username"
         } else {
-            "$BASE_URL/leaderboard"
+            "$appBaseUrl/leaderboard"
         }
         return appendStyleParams(baseUrl, style)
     }
 
-    fun customWorkout(style: IStyle): String = appendStyleParams("$BASE_URL/custom-workout", style)
+    fun customWorkout(style: IStyle): String = appendStyleParams("$appBaseUrl/custom-workout", style)
 
     fun experienceView(experience: String, style: IStyle): String {
         val encoded = Uri.encode(experience.lowercase())
-        return appendStyleParams("$BASE_URL/experiences/$encoded", style)
+        return appendStyleParams("$appBaseUrl/experiences/$encoded", style)
     }
 
-    fun personalizedPlanView(style: IStyle): String = appendStyleParams("$BASE_URL/personalized-plan", style)
+    fun personalizedPlanView(style: IStyle): String = appendStyleParams("$appBaseUrl/personalized-plan", style)
 
     fun adminView(
         contentType: ContentType?,
@@ -98,11 +107,11 @@ object UrlHelper {
         return uri.toString()
     }
 
-    fun cameraView(style: IStyle): String = appendStyleParams("$BASE_URL/camera", style)
+    fun cameraView(style: IStyle): String = appendStyleParams("$appBaseUrl/camera", style)
 
     fun customComponentView(route: String, style: IStyle): String {
         val encodedPath = route.split("/").joinToString("/") { Uri.encode(it) }
-        return appendStyleParams("$BASE_URL/$encodedPath", style)
+        return appendStyleParams("$appBaseUrl/$encodedPath", style)
     }
 
     /**
