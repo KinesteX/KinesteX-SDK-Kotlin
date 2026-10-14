@@ -75,7 +75,7 @@ Register your custom Application class in `AndroidManifest.xml`:
 
 #### Regional deployments
 
-If your company runs on a regional KinesteX deployment, pass its hosts to `initialize`. Every view and the warmup page then load from `baseUrl`, and `KinesteXSDK.api` calls go to `apiBaseUrl`. For the Saudi Arabia (Dammam) deployment:
+If your company runs on a regional KinesteX deployment, pass its hosts to `initialize`. Every view and the warmup page then load from `baseUrl`, `KinesteXSDK.api` calls go to `apiBaseUrl`, and the admin editor opens on the `apiBaseUrl` host. For the Saudi Arabia (Dammam) deployment:
 
 ```kotlin
 KinesteXSDK.initialize(
@@ -88,7 +88,7 @@ KinesteXSDK.initialize(
 )
 ```
 
-Leave both out to use the default deployment. A value that is not an `https://` URL throws `IllegalArgumentException`.
+Leave both out to use the default deployment. A value that is not an `https://` URL with a host throws `IllegalArgumentException`.
 
 ### 4. Request camera permission from app level:
 

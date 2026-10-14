@@ -5,10 +5,12 @@ import android.util.Log
 import com.kinestex.kinestexsdkkotlin.api.ContentType
 import com.kinestex.kinestexsdkkotlin.models.IStyle
 import androidx.core.net.toUri
+import java.net.URI
+import java.net.URISyntaxException
 
 object UrlHelper {
     internal const val DEFAULT_BASE_URL = "https://ai.kinestex.com"
-    private const val ADMIN_BASE_URL = "https://admin.kinestex.com"
+    internal const val DEFAULT_ADMIN_BASE_URL = "https://admin.kinestex.com"
 
     /**
      * App host for every view and the warmup page. Set by [com.kinestex.kinestexsdkkotlin.KinesteXSDK.initialize];
@@ -17,7 +19,38 @@ object UrlHelper {
     @Volatile
     internal var appBaseUrl: String = DEFAULT_BASE_URL
 
+    /** Admin dashboard origin for [adminView]; the same origin serves the Content API. */
+    @Volatile
+    internal var adminBaseUrl: String = DEFAULT_ADMIN_BASE_URL
+
     internal fun warmupUrl(): String = "$appBaseUrl/warmup"
+
+    /**
+     * Validates a host override passed to KinesteXSDK.initialize and returns it without a trailing "/".
+     * Throws instead of falling back: a silent fallback would send a regional tenant's traffic and data
+     * to another region.
+     */
+    internal fun requireHttpsUrl(value: String, name: String): String {
+        val url = value.trim().trimEnd('/')
+        val uri = try {
+            URI(url)
+        } catch (e: URISyntaxException) {
+            null
+        }
+        require(
+            uri != null &&
+                uri.scheme.equals("https", ignoreCase = true) &&
+                !uri.host.isNullOrEmpty() &&
+                uri.rawQuery == null &&
+                uri.rawFragment == null
+        ) {
+            "KinesteXSDK.initialize: $name must be an https URL with a host, got \"$value\""
+        }
+        return url
+    }
+
+    /** Scheme and host (with port, if any) of an already validated URL. */
+    internal fun originOf(url: String): String = URI(url).let { "${it.scheme}://${it.rawAuthority}" }
 
     /**
      * Appends style query parameters to a base URL
@@ -77,12 +110,12 @@ object UrlHelper {
 
         if (hasType != hasId) {
             Log.e("KinesteX", "contentType and contentId must be provided together")
-            return ADMIN_BASE_URL
+            return adminBaseUrl
         }
 
         if (hasId && containsDisallowedCharacters(contentId!!)) {
             Log.e("KinesteX", "contentId contains disallowed characters")
-            return ADMIN_BASE_URL
+            return adminBaseUrl
         }
 
         val pathSegments = if (hasType && hasId) {
@@ -91,9 +124,7 @@ object UrlHelper {
             listOf("main")
         }
 
-        val uri = Uri.Builder()
-            .scheme("https")
-            .authority("admin.kinestex.com")
+        val uri = Uri.parse(adminBaseUrl).buildUpon()
             .apply { pathSegments.forEach { appendPath(it) } }
             .appendQueryParameter("isCustomAuth", "true")
             .appendQueryParameter("hideSidebar", "true")
