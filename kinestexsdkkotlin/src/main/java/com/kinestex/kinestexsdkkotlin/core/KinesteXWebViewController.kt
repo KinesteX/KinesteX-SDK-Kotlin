@@ -141,6 +141,12 @@ class KinesteXWebViewController private constructor() {
         // Reset first view load flag to ensure history gets cleared for this new view
         isFirstViewLoad = true
 
+        // Drop the previous page's launch retries: a pending one would fire against this page,
+        // and a warmup that never launched (e.g. session auth) leaves retryCount at MAX_RETRIES
+        launchTimer?.removeCallbacksAndMessages(null)
+        launchTimer = null
+        retryCount = 0
+
         // Set loading state
         isLoading.value = true
 
@@ -195,12 +201,9 @@ class KinesteXWebViewController private constructor() {
 
                     // If this was the warmup load
                     if (loadedUrl == warmupUrl) {
+                        // No navigation here: loadView already navigated to the target URL, and the
+                        // warmup can finish after that, so navigating again would load the view twice
                         logger.success("Warmup page loaded")
-                        // If we have a different target URL, navigate to it
-                        if (currentUrl != null && currentUrl != warmupUrl) {
-                            logger.info("Navigating to target URL: $currentUrl")
-                            navigateToUrl(currentUrl!!)
-                        }
                     } else if (loadedUrl != "about:blank") {
                         logger.info("Page loaded: $loadedUrl")
 
